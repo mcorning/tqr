@@ -1,6 +1,7 @@
 {
   "name": "tqr",
   "version": "0.03.1512",
+  "description": "This is client-side code for Anonymous Engagement that provides the foundation for projects like Anonymous Contact Tracing and Than Q Reward system.",
   "scripts": {
     "start": "node tqr-client.js",
     "herokuLogsCvew": "heroku logs -a tqr --source app -n 500"
@@ -9,7 +10,6 @@
     "clarify": "^2.1.0",
     "cli-color": "^2.0.1",
     "core-js": "^3.20.0",
-    "express": "^4.17.2",
     "luxon": "^1.28.0",
     "nodemon": "^2.0.15",
     "pratica": "^2.0.3",
@@ -17,5 +17,10 @@
   },
   "devDependencies": {
     "eslint": "^7.32.0"
+  },
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mcorning/tqr"
   }
 }
