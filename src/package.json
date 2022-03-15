@@ -2,7 +2,7 @@
   "name": "tqr",
   "version": "0.03.1512",
   "scripts": {
-    "start": "node index.js",
+    "start": "node tqr-client.js",
     "herokuLogsCvew": "heroku logs -a tqr --source app -n 500"
   },
   "dependencies": {
@@ -10,12 +10,10 @@
     "cli-color": "^2.0.1",
     "core-js": "^3.20.0",
     "express": "^4.17.2",
-    "ioredis": "^4.28.2",
     "luxon": "^1.28.0",
     "nodemon": "^2.0.15",
     "pratica": "^2.0.3",
-    "saas": "^1.0.0",
-    "socket.io": "^4.4.0"
+    "socket.io-client": "^4.4.0"
   },
   "devDependencies": {
     "eslint": "^7.32.0"

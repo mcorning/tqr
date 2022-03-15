@@ -5,7 +5,7 @@ const express = require('express');
 const socketIO = require('socket.io');
 const serveStatic = require('serve-static');
 
-const PORT = process.env.PORT || 3003;
+const PORT = process.env.PORT || 3333;
 const dirPath = path.join(__dirname, '../dist');
 
 const {
@@ -21,7 +21,9 @@ const {
   killSwitch,
   redis,
 } = require('./redis/tqr');
-const { entryFromStream, url } = require('./utils/utils');
+
+const { entryFromStream, randomId, url } = require('./utils/utils');
+const { success } = require('./utils/helpers');
 
 const server = express()
   .use(serveStatic(dirPath))
@@ -78,11 +80,6 @@ const initConnection = (socket) => {
   // used in tqrHandshake event handler
   socket.userID = newUserID;
 
-  // for graph-based alerts
-  // getPendingAlerts(newUserID, socket.id);
-  // for stream-based alerts
-  listenForMessage(lastDeliveredId);
-
   // notify existing users (this is only important if use has opted in to ACT Private Messaging)
   socket.broadcast.emit('userConnected', {
     userID,
@@ -96,4 +93,5 @@ const initConnection = (socket) => {
 io.on('connection', (socket) => {
   //#region Handling socket connection
   initConnection(socket);
+  socket.on('hi', (msg) => console.log(msg));
 });

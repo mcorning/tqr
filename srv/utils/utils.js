@@ -1,5 +1,7 @@
 const { formatTime, formatDate } = require('./luxonHelpers');
 const { highlight, url } = require('./helpers');
+const crypto = require('crypto');
+const randomId = () => crypto.randomBytes(8).toString('hex');
 
 /**
  * It takes a list of promises and waits for them to resolve.
@@ -204,5 +206,6 @@ module.exports = {
   getDateFromSid,
   getTimeFromSid,
   keepPromises,
+  randomId,
   url,
 };
