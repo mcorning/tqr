@@ -26,7 +26,7 @@ console.log('options:>>', options);
 console.groupEnd();
 
 //#region Helpers
-const { err, success, printJson } = require('../utils/helpers.js');
+const { error, success, jLog } = require('../utils/helpers.js');
 const {
   isEmpty,
   objectFromStream,
@@ -74,10 +74,11 @@ const killSwitch = async (country) => {
 //#endregion Helpers
 
 //#region API
+
 //#region CREATE
-// xadd countries * name sg
-// const addCountry = (country) => redis.xadd('countries', '*', 'name', country);
-// xadd us * biz "Outlaw Barbers" uid 9bb09370e625baf7
+const addConnection = (key, sessionID) =>
+  redis.xadd(`${key}`, '*', 'sessionID', sessionID).catch((e) => error(e));
+
 const addSponsor = ({ key, biz, uid }) =>
   redis
     .xadd(`${key}`, '*', 'biz', biz, 'uid', uid)
@@ -273,6 +274,7 @@ if (TESTING) {
 //#endregion Tests
 
 module.exports = {
+  addConnection,
   addPromo,
   addReward,
   addSponsor,

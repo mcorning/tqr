@@ -1,9 +1,25 @@
 var io = require('socket.io-client');
-var socket = io.connect('http://localhost:3333');
 
-var msg2 = 'hello';
-socket.emit('hi', msg2);
+const userID = '1647383723288-0';
+const sessionID = '43623f17a7114aa9';
+const lastDeliveredId = '';
 
-socket.on('newSession', (newSession) => {
-  console.log(newSession);
+const data = {
+  userID,
+  sessionID,
+  lastDeliveredId,
+  id: 1,
+};
+
+const options = {
+  reconnectionDelayMax: 10000,
+  auth: data,
+};
+
+var socket = io.connect('http://localhost:3333', options);
+
+socket.on('newUserID', (newUser) => {
+  console.log(newUser);
 });
+
+console.clear();
