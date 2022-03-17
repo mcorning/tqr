@@ -87,6 +87,11 @@ const addConnection = (country, nonce) =>
     .xadd(`${country}:connections`, '*', 'nonce', nonce)
     .catch((e) => error(e));
 
+const addOutlet = (nonce, id) =>
+  redis
+    .xadd(`${nonce}`, '*', 'connectionID', id)
+    .catch((e) => console.log(err(e)));
+
 /**
  * `addSponsor` is a function that takes a `key`, a `biz`, and a `uid` and adds them to the stream
  * `key` using the `xadd` command
@@ -293,6 +298,7 @@ if (TESTING) {
 
 module.exports = {
   addConnection,
+  addOutlet,
   addPromo,
   addReward,
   addSponsor,

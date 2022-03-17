@@ -1,10 +1,19 @@
 //#region Setup
 const io = require('socket.io-client');
 const fs = require('fs');
-const { error, log, jLog } = require('../srv/utils/helpers');
+const {
+  error,
+  head,
+  log,
+  jLog,
+  notice,
+  reducePairsToObject,
+  success,
+  table,
+} = require('../srv/utils/helpers');
 
-const auth = require('./auth.json');
-jLog(auth);
+const data = require('./auth.json');
+const auth = data.chain;
 
 const options = {
   reconnectionDelayMax: 10_000,
@@ -14,21 +23,25 @@ jLog(options, 'options :>> ');
 const socket = io.connect('http://localhost:3333', options);
 
 log('args:');
-process.argv.slice(2).forEach((val, index) => {
-  log(`${index}: ${val}`);
-});
-const filePath = __dirname + '\\auth.json';
+table([reducePairsToObject(process.argv.slice(2))]);
+
+log();
 //#endregion Setup
 
-socket.on('newUserID', (newUserCreds) => {
-  jLog(newUserCreds, 'New credentials:');
-  fs.writeFile(filePath, JSON.stringify(newUserCreds), (err) => error(err));
-});
+socket.on('newOutlet', (newOutlet) => success(`newOutlet: ${newOutlet}`));
 
-socket.on('connected', () => {
-  log('connected');
-  socket.emit('getCountries', null, (answer) =>
-    log(`Countries :>> 
-  ${answer}`)
-  );
+socket.on('newConnection', (newChains) => {
+  const newChain = head(newChains);
+
+  notice('on newConnection: >>');
+  const filePath = `${__dirname}\\${newChain.nonce}.json`;
+  jLog(newChain, 'New chain:');
+  fs.writeFile(filePath, JSON.stringify(newChain), (err) => error(err));
+  data.outlets.forEach((outlet) => {
+    socket.emit('addOutlet', {
+      country: outlet.country,
+      key: `${newChain.nonce}@${outlet.nonce}`,
+    });
+  });
+  // now populate the chain outlets and promos in the the chain stream
 });
