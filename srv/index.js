@@ -1,6 +1,5 @@
 console.clear();
 require('clarify');
-const { DateTime } = require('luxon');
 
 const path = require('path');
 const express = require('express');
@@ -26,7 +25,7 @@ const {
 } = require('./redis/tqr');
 
 const { entryFromStream, randomId, url } = require('./utils/utils');
-const { success, log } = require('./utils/helpers');
+const { success, jLog, log, formatTime } = require('./utils/helpers');
 const { debug } = require('console');
 
 const server = express()
@@ -41,13 +40,38 @@ const server = express()
   });
 const io = socketIO(server);
 
+const newConnection = (socket, { country, nonce }) => {
+  addConnection(country, nonce).then((id) => {
+    const newUserID = id;
+    log(newUserID);
+    // emit new session details so the client can store the session in localStorage
+    socket.emit('newUserID', {
+      country,
+      nonce,
+      userID: id,
+      lastDeliveredId: '$',
+    });
+  });
+};
 const initConnection = (socket) => {
-  const { sessionID, userID, lastDeliveredId } = socket.handshake.auth;
+  const { auth } = socket.handshake;
+  if (Array.isArray(auth)) {
+    auth.forEach((connection) => {
+      newConnection(socket, connection);
+    });
+    return;
+  }
+
+  const { country, nonce, userID, lastDeliveredId } = auth;
+  if (!userID) {
+    newConnection(socket, { country, nonce });
+  }
+
   let newUserID = userID;
   const tableData = [
     {
+      nonce,
       socketID: socket.id,
-      sessionID,
       userID,
       lastDeliveredId,
     },
@@ -56,21 +80,8 @@ const initConnection = (socket) => {
 
   console.groupCollapsed('io.on(connection)');
 
-  if (!userID) {
-    const newSessionID = randomId();
-    addConnection('connections', 'sessionID', newSessionID).then((id) => {
-      log(id);
-      newUserID = id;
-      // emit new session details so the client can store the session in localStorage
-      socket.emit('newUserID', {
-        userID: id,
-        sessionID: newSessionID,
-      });
-    });
-  }
-
   // join the "userID" room
-  // we send alerts using the userID stored in redisGraph for visitors
+  // we send alerts using the userID stored in Redis stream
   socket.join(newUserID);
   // used in tqrHandshake event handler
   socket.userID = newUserID;
@@ -79,7 +90,22 @@ const initConnection = (socket) => {
 };
 
 io.on('connection', (socket) => {
+  log(formatTime());
   //#region Handling socket connection
   initConnection(socket);
+  socket.emit('connected');
+
+  socket.on('getCountries', (_, ack) => {
+    getCountries()
+      .then((countries) => {
+        if (ack) {
+          jLog(countries.flat(), 'countries :>> ');
+          ack(countries);
+        }
+      })
+      .catch((e) => {
+        console.log('e :>> ', e);
+      });
+  });
   //#endregion
 });

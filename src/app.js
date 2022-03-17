@@ -1,25 +1,34 @@
-var io = require('socket.io-client');
+//#region Setup
+const io = require('socket.io-client');
+const fs = require('fs');
+const { error, log, jLog } = require('../srv/utils/helpers');
 
-const userID = '1647383723288-0';
-const sessionID = '43623f17a7114aa9';
-const lastDeliveredId = '';
-
-const data = {
-  userID,
-  sessionID,
-  lastDeliveredId,
-  id: 1,
-};
+const auth = require('./auth.json');
+jLog(auth);
 
 const options = {
-  reconnectionDelayMax: 10000,
-  auth: data,
+  reconnectionDelayMax: 10_000,
+  auth,
 };
+jLog(options, 'options :>> ');
+const socket = io.connect('http://localhost:3333', options);
 
-var socket = io.connect('http://localhost:3333', options);
+log('args:');
+process.argv.slice(2).forEach((val, index) => {
+  log(`${index}: ${val}`);
+});
+const filePath = __dirname + '\\auth.json';
+//#endregion Setup
 
-socket.on('newUserID', (newUser) => {
-  console.log(newUser);
+socket.on('newUserID', (newUserCreds) => {
+  jLog(newUserCreds, 'New credentials:');
+  fs.writeFile(filePath, JSON.stringify(newUserCreds), (err) => error(err));
 });
 
-console.clear();
+socket.on('connected', () => {
+  log('connected');
+  socket.emit('getCountries', null, (answer) =>
+    log(`Countries :>> 
+  ${answer}`)
+  );
+});

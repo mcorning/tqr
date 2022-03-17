@@ -76,8 +76,10 @@ const killSwitch = async (country) => {
 //#region API
 
 //#region CREATE
-const addConnection = (key, sessionID) =>
-  redis.xadd(`${key}`, '*', 'sessionID', sessionID).catch((e) => error(e));
+const addConnection = (country, nonce) =>
+  redis
+    .xadd(`${country}:connections`, '*', 'nonce', nonce)
+    .catch((e) => error(e));
 
 const addSponsor = ({ key, biz, uid }) =>
   redis
@@ -128,12 +130,12 @@ const deleteStream = (key, ids) => redis.xdel(key, ids);
 //#endregion DELETE
 
 //#region READ
-const getLoyalists = async (key) => {
+const getLoyalists = async (loyalistKey) => {
   async function promises(arr) {
-    const unresolved = arr.map(async (key) => {
-      const points = await redis.xlen(key);
-      const cid = key.slice(key.lastIndexOf(':') + 1);
-      const rewards = await redis.xrange(key, '-', '+');
+    const unresolved = arr.map(async (loyalistKey) => {
+      const points = await redis.xlen(loyalistKey);
+      const cid = loyalistKey.slice(loyalistKey.lastIndexOf(':') + 1);
+      const rewards = await redis.xrange(loyalistKey, '-', '+');
       const dated = rewards.map((v) => v[0].slice(0, 13))[0];
       return { cid, points, dated };
     });
