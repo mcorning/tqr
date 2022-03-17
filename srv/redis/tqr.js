@@ -76,11 +76,21 @@ const killSwitch = async (country) => {
 //#region API
 
 //#region CREATE
+
+/**
+ * `Add a connection to the stream for the given country.`
+ * @param country - The country code of the country the user is connecting from.
+ * @param nonce - A unique identifier for the connection.
+ */
 const addConnection = (country, nonce) =>
   redis
     .xadd(`${country}:connections`, '*', 'nonce', nonce)
     .catch((e) => error(e));
 
+/**
+ * `addSponsor` is a function that takes a `key`, a `biz`, and a `uid` and adds them to the stream
+ * `key` using the `xadd` command
+ */
 const addSponsor = ({ key, biz, uid }) =>
   redis
     .xadd(`${key}`, '*', 'biz', biz, 'uid', uid)
@@ -101,6 +111,11 @@ const getPromos = (key) =>
 // TODO this is weird. i used to be able to chain promises here
 // at least refactor this to use compose()...
 // and what happens if this chain fails at any point? how does the UI handle it?
+/**
+ * It reads the stream of sponsors and returns an array of objects.
+ * @param key - The key of the stream to read from.
+ * @returns An array of objects.
+ */
 const getSponsors = async (key) => {
   console.log(`XREAD STREAMS ${key} 0`);
   const stream = await redis
@@ -195,6 +210,7 @@ const getRewards = (key) =>
 const TESTING = false;
 
 //#region Tests
+// TODO refactor tests for new strategy
 if (TESTING) {
   //#region Test Data
   const bids = [

@@ -24,26 +24,31 @@ const {
   redis,
 } = require('./redis/tqr');
 
-const { entryFromStream, randomId, url } = require('./utils/utils');
+const { entryFromStream } = require('./utils/utils');
 const { success, jLog, log, formatTime } = require('./utils/helpers');
 const { debug } = require('console');
 
+/* This is the express server that is listening on port 3333. */
 const server = express()
   .use(serveStatic(dirPath))
   .use('*', (req, res) => res.sendFile(`${dirPath}/index.html`))
   .listen(PORT, () => {
     console.groupCollapsed('express');
     log('Listening on:');
-    log(url(`http://localhost:${PORT}`));
+    success(`http://localhost:${PORT}`);
     log();
     console.groupEnd();
   });
 const io = socketIO(server);
 
+/**
+ * Create a new user ID and add it to the database.
+ * @param socket - the socket that is connecting to the server
+ * @param country - the country of the Principal
+ * @param nonce - any locally unique value;  e.g., a business license or address
+ */
 const newConnection = (socket, { country, nonce }) => {
   addConnection(country, nonce).then((id) => {
-    const newUserID = id;
-    log(newUserID);
     // emit new session details so the client can store the session in localStorage
     socket.emit('newUserID', {
       country,
@@ -53,6 +58,12 @@ const newConnection = (socket, { country, nonce }) => {
     });
   });
 };
+
+/**
+ * When a new connection is made, we store the userID, socketID, and lastDeliveredId in Redis
+ * @param socket - the socket object
+ * @returns The socket.id
+ */
 const initConnection = (socket) => {
   const { auth } = socket.handshake;
   if (Array.isArray(auth)) {
@@ -67,7 +78,6 @@ const initConnection = (socket) => {
     newConnection(socket, { country, nonce });
   }
 
-  let newUserID = userID;
   const tableData = [
     {
       nonce,
@@ -82,19 +92,21 @@ const initConnection = (socket) => {
 
   // join the "userID" room
   // we send alerts using the userID stored in Redis stream
-  socket.join(newUserID);
+  socket.join(userID);
   // used in tqrHandshake event handler
-  socket.userID = newUserID;
+  socket.userID = userID;
 
   console.groupEnd();
 };
 
+/* The above code is sending a request to the server to get the list of countries. */
 io.on('connection', (socket) => {
   log(formatTime());
   //#region Handling socket connection
   initConnection(socket);
   socket.emit('connected');
 
+  /* Sending a request to the server to get the list of countries. */
   socket.on('getCountries', (_, ack) => {
     getCountries()
       .then((countries) => {
