@@ -102,8 +102,8 @@ const addSponsor = ({ key, biz, uid }) =>
     .catch((e) => console.log(err(e)));
 
 // > xadd tqr:us1642558736304-0:promos * biz "Fika" promoText 'Welcome back Renee'
-const addPromo = ({ key, biz, promoText }) =>
-  redis.xadd(key, '*', 'biz', biz, 'promoText', promoText);
+const addPromo = ({ key, name, promoUrl }) =>
+  redis.xadd(key, '*', 'name', name, 'promoUrl', promoUrl);
 
 // xread tqr:us:1642558471131-0:promos 0
 const getPromos = (key) =>
@@ -150,43 +150,6 @@ const deleteStream = (key, ids) => redis.xdel(key, ids);
 //#endregion DELETE
 
 //#region READ
-const getLoyalists = async (loyalistKey) => {
-  async function promises(arr) {
-    const unresolved = arr.map(async (loyalistKey) => {
-      const points = await redis.xlen(loyalistKey);
-      const cid = loyalistKey.slice(loyalistKey.lastIndexOf(':') + 1);
-      const rewards = await redis.xrange(loyalistKey, '-', '+');
-      const dated = rewards.map((v) => v[0].slice(0, 13))[0];
-      return { cid, points, dated };
-    });
-
-    return await Promise.all(unresolved);
-  }
-  // > scan 0 match tqr:us:1643426433242-0:rewards*
-  const scanned = await redis.scan('0', 'MATCH', key);
-  const keys = scanned[1];
-  console.log(success(printJson(keys)));
-  const results = await promises(keys);
-  console.log('results :>> ', printJson(results));
-
-  return results;
-
-  // try {
-  //   redis
-  //     .scan('0', 'MATCH', key)
-  //     .then((customers) => {
-  //       console.log(success(customers));
-  //       return customers;
-  //     })
-  //     .catch((e) => {
-  //       console.log(err(e));
-  //     });
-
-  //   // > xrange tqr:us:1643426433242-0:rewards:833dfba67f058dc4 - +
-  // } catch (error) {
-  //   console.log(err(error));
-  // }
-};
 
 const getCountries = () =>
   redis
@@ -304,7 +267,6 @@ module.exports = {
   addSponsor,
   deleteStream,
   getCountries,
-  getLoyalists,
   getPromos,
   getSponsor,
   getRewards,

@@ -18,7 +18,6 @@ const {
   addReward,
   deleteStream,
   getCountries,
-  getLoyalists,
   getPromos,
   getRewards,
   getSponsors,
@@ -54,27 +53,26 @@ const io = socketIO(server);
 // CALLED BY: initConnection()
 // RETURNS: an event that now includes the stream ID for the user
 // NOTE: the Stream ID serves as the connection ID for socket.io
-const newConnection = (socket, { country, nonce }) => {
-  console.log({ country, nonce });
-  addConnection(country, nonce).then((id) => {
-    // emit new session details so the client can store the session in localStorage
-    socket.emit('newUserID', {
-      country,
-      nonce,
-      userID: id,
-      lastDeliveredId: '$',
-    });
-  });
-};
+// const newConnection = (socket, { country, nonce }) => {
+//   console.log({ country, nonce });
+//   addConnection(country, nonce).then((id) => {
+//     // emit new session details so the client can store the session in localStorage
+//     socket.emit('newUserID', {
+//       country,
+//       nonce,
+//       userID: id,
+//       lastDeliveredId: '$',
+//     });
+//   });
+// };
 const finishConnection = (socket, nonce, lastDeliveredId, userID) => {
-  const tableData = [
-    {
-      nonce,
-      socketID: socket.id,
-      userID,
-      lastDeliveredId,
-    },
-  ];
+  const conn = {
+    nonce,
+    socketID: socket.id,
+    userID,
+    lastDeliveredId,
+  };
+  const tableData = [conn];
   console.table(tableData);
 
   console.groupCollapsed('io.on(connection)');
@@ -84,9 +82,10 @@ const finishConnection = (socket, nonce, lastDeliveredId, userID) => {
   socket.join(userID);
   // used in tqrHandshake event handler
   socket.userID = userID;
+  socket.nonce = nonce;
   console.groupEnd();
 
-  return tableData;
+  return conn;
 };
 
 /**
@@ -105,7 +104,7 @@ const initConnection = (socket) => {
   if (!userID && country && nonce) {
     addConnection(country, nonce)
       .then((id) => finishConnection(socket, nonce, lastDeliveredId, id))
-      .then((tableDate) => socket.emit('newConnection', tableDate));
+      .then((newConnection) => socket.emit('newConnection', newConnection));
     return;
   }
   finishConnection(socket, nonce, lastDeliveredId, userID);
@@ -117,17 +116,6 @@ const safeAck = (ack, payload) => {
   }
 };
 
-const addChain = (socket, node) => {
-  if (node) {
-    newConnection(socket, auth[node]);
-    return;
-  }
-  if (Array.isArray(auth)) {
-    auth.forEach((connection) => {
-      newConnection(socket, connection);
-    });
-  }
-};
 //#endregion Helpers
 
 /* The above code is sending a request to the server to get the list of countries. */
@@ -135,11 +123,18 @@ io.on('connection', (socket) => {
   log(formatTime());
   //#region Handling socket connection
   initConnection(socket);
-
+  socket.emit('connected', { userID: socket.userID, nonce: socket.nonce });
   socket.on('addOutlet', ({ country, key }) => {
     addConnection(country, key)
       .then((id) => addOutlet(key, id))
       .then((id) => socket.emit('newOutlet', id))
+      .catch((e) => error('e :>> ', e));
+  });
+  socket.on('addPromo', (promo) => {
+    const { key, name, promoUrl } = promo;
+    jLog(key, 'index on addPromo :>>');
+    addPromo({ key, name, promoUrl })
+      .then((id) => socket.emit('newPromo', id))
       .catch((e) => error('e :>> ', e));
   });
   //#endregion
