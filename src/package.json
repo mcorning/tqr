@@ -3,8 +3,7 @@
   "version": "0.03.1512",
   "description": "This is client-side code for Anonymous Engagement that provides the foundation for projects like Anonymous Contact Tracing and Than Q Reward system.",
   "scripts": {
-    "start": "node app",
-    "test": "node app 'test'",
+    "vendor": "node vendor",
     "herokuLogsCvew": "heroku logs -a tqr --source app -n 500"
   },
   "dependencies": {

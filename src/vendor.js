@@ -1,9 +1,8 @@
 //#region Setup
 const io = require('socket.io-client');
-const fs = require('fs');
+const { writeFile } = require('fs');
 const {
   error,
-  head,
   log,
   jLog,
   notice,
@@ -18,21 +17,29 @@ const auth = {
   nonce: data.chain.nonce,
   country: data.chain.country,
 };
-// const auth = { userID: data.outlets[0].userID, nonce: data.outlets[0].nonce };
 const promoScope = [...['', 'Delivery'], ...data.outlets.map((v) => v.nonce)];
 
 const options = {
   reconnectionDelayMax: 10_000,
   auth,
 };
+
+console.groupCollapsed('Expand for options and args...');
 jLog(options, 'options :>> ');
-const socket = io.connect('http://localhost:3333', options);
 
 log('args:');
 table([reducePairsToObject(process.argv.slice(2))]);
 
 log();
+console.groupEnd();
+
 //#endregion Setup
+
+/////////////////// Main Entry Point ///////////////////
+
+const socket = io.connect('http://localhost:3333', options);
+
+////////////////////////////////////////////////////////
 
 //#region Helpers
 // "promotions": [
@@ -56,6 +63,7 @@ const getPromo = (promo) => {
 };
 //#endregion Helpers
 
+//#region Socket message handlers
 socket.on('connected', ({ userID, nonce }) => {
   success(`Welcome back, ${userID} ${nonce}`);
 });
@@ -65,10 +73,10 @@ socket.on('newPromo', (newPromo) => success(`newPromo: ${newPromo}`));
 
 socket.on('newConnection', (newChain) => {
   //#region Helpers
-  jLog(newChain, 'New chain:');
   notice('Handling on newConnection: >>');
+  jLog(newChain, 'New chain:');
   const filePath = `${__dirname}\\${newChain.nonce}.json`;
-  fs.writeFile(filePath, JSON.stringify(newChain), (err) => error(err));
+  writeFile(filePath, JSON.stringify(newChain), (err) => error(err));
 
   const emitOutlet = (outlet) =>
     socket.emit('addOutlet', {
@@ -84,3 +92,4 @@ socket.on('newConnection', (newChain) => {
   // ...and promos
   data.promotions.forEach((promo) => emitPromo(promo));
 });
+//#endregion Socket message handlers

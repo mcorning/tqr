@@ -156,7 +156,7 @@ const getCountries = () =>
     .scan('0', 'MATCH', 'tqr:*')
     .then((countries) => countries.filter((v, i) => i > 0))
     .then((countryIDs) => countryIDs.map((v) => v.map((c) => c.slice(4, 6))))
-    .catch((e) => console.log('e :>> ', e));
+    .catch((e) => console.error('e :>> ', e));
 
 // xrange us 1642558471131-0 1642558471131-0
 const getSponsor = (country, ssid) => {

@@ -26,7 +26,7 @@ const {
 } = require('./redis/tqr');
 
 const { entryFromStream } = require('./utils/utils');
-const { error, success, jLog, log, formatTime } = require('./utils/helpers');
+const { error, success, jLog, log, notice } = require('./utils/helpers');
 const { debug } = require('console');
 
 /* This is the express server that is listening on port 3333. */
@@ -66,6 +66,7 @@ const io = socketIO(server);
 //   });
 // };
 const finishConnection = (socket, nonce, lastDeliveredId, userID) => {
+  console.groupCollapsed('io.on(connection)');
   const conn = {
     nonce,
     socketID: socket.id,
@@ -74,8 +75,6 @@ const finishConnection = (socket, nonce, lastDeliveredId, userID) => {
   };
   const tableData = [conn];
   console.table(tableData);
-
-  console.groupCollapsed('io.on(connection)');
 
   // join the "userID" room
   // we send alerts using the userID stored in Redis stream
@@ -104,38 +103,48 @@ const initConnection = (socket) => {
   if (!userID && country && nonce) {
     addConnection(country, nonce)
       .then((id) => finishConnection(socket, nonce, lastDeliveredId, id))
-      .then((newConnection) => socket.emit('newConnection', newConnection));
+      .then((newConnection) => socket.emit('newConnection', newConnection))
+      .catch((e) =>
+        error(`index.js: initConnection.addConnection 
+    ${e.stack}`)
+      );
     return;
   }
   finishConnection(socket, nonce, lastDeliveredId, userID);
+  socket.emit('connected', { userID: socket.userID, nonce: socket.nonce });
 };
 
-const safeAck = (ack, payload) => {
-  if (ack) {
-    ack(payload);
-  }
+const connectOutlet = (socket, { country, key }) => {
+  addConnection(country, key)
+    .then((id) => addOutlet(key, id))
+    .then((id) => socket.emit('newOutlet', id))
+    .catch((e) =>
+      error(`index.js: connectOutlet.addConnection 
+    ${e.stack}`)
+    );
 };
 
 //#endregion Helpers
 
 /* The above code is sending a request to the server to get the list of countries. */
 io.on('connection', (socket) => {
-  log(formatTime());
+  notice(`About to handle on('connection') for ${socket.handshake.auth.nonce}`);
   //#region Handling socket connection
   initConnection(socket);
-  socket.emit('connected', { userID: socket.userID, nonce: socket.nonce });
-  socket.on('addOutlet', ({ country, key }) => {
-    addConnection(country, key)
-      .then((id) => addOutlet(key, id))
-      .then((id) => socket.emit('newOutlet', id))
-      .catch((e) => error('e :>> ', e));
-  });
+
+  socket.on('addOutlet', ({ country, key }) =>
+    connectOutlet(socket, { country, key })
+  );
+
   socket.on('addPromo', (promo) => {
     const { key, name, promoUrl } = promo;
-    jLog(key, 'index on addPromo :>>');
+    jLog(key, 'index.js on("addPromo") with key :>>');
     addPromo({ key, name, promoUrl })
       .then((id) => socket.emit('newPromo', id))
-      .catch((e) => error('e :>> ', e));
+      .catch((e) =>
+        error(`index.js: on("addPromo")
+       ${e.stack}`)
+      );
   });
   //#endregion
 });

@@ -14,8 +14,8 @@ const isValidJSON = (str) => {
 };
 //#endregion
 
-function error(msg) {
-  console.error(clc.red.bold(msg));
+function error(e) {
+  console.error(clc.red.bold(e));
 }
 function endSuccess(msg) {
   console.log(clc.bgGreen.black(msg));
@@ -38,7 +38,7 @@ function log(msg = ' ') {
   console.log(msg);
 }
 function notice(msg) {
-  console.log(clc.blue(`${formatSmallTime()}: ${msg}`));
+  console.log(clc.cyanBright(`${formatSmallTime()}: ${msg}`));
 }
 const reducePairsToObject = (arrayOfPairs) =>
   arrayOfPairs.reduce((a, c, i) => {

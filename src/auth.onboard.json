@@ -2,18 +2,18 @@
     "chain": {
         "country": "sg",
         "nonce": "FoodRepublic",
-        "userID": "1647640117970-0"
+        "userID": ""
     },
     "outlets": [
         {
             "country": "sg",
             "nonce": "BreadTalk",
-            "userID": "1647640118065-0"
+            "userID": ""
         },
         {
             "country": "sg",
             "nonce": "SuntecCity",
-            "userID": "1647640118065-1"
+            "userID": ""
         }
     ],
     "promotions": [
