@@ -37,8 +37,8 @@ function jLog(json, msg = 'json >>:', color = clc.white) {
 function log(msg = ' ') {
   console.log(msg);
 }
-function notice(msg) {
-  console.log(clc.cyanBright(`${formatSmallTime()}: ${msg}`));
+function notice(msg, color = clc.cyanBright) {
+  console.log(color(`${formatSmallTime()}: ${msg}`));
 }
 const reducePairsToObject = (arrayOfPairs) =>
   arrayOfPairs.reduce((a, c, i) => {

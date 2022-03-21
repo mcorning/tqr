@@ -13,12 +13,14 @@ const dirPath = path.join(__dirname, '../dist');
 const {
   addConnection,
   addOutlet,
-  addSponsor,
+  getOutlets,
   addPromo,
+  getPromos,
+
+  addSponsor,
   addReward,
   deleteStream,
   getCountries,
-  getPromos,
   getRewards,
   getSponsors,
   killSwitch,
@@ -106,7 +108,8 @@ const initConnection = (socket) => {
       .then((newConnection) => socket.emit('newConnection', newConnection))
       .catch((e) =>
         error(`index.js: initConnection.addConnection 
-    ${e.stack}`)
+    ${e.stack}
+    ${e.cause}`)
       );
     return;
   }
@@ -114,14 +117,47 @@ const initConnection = (socket) => {
   socket.emit('connected', { userID: socket.userID, nonce: socket.nonce });
 };
 
-const connectOutlet = (socket, { country, key }) => {
+const onAddOutlet = (socket, { country, key }) => {
+  // first make a separate connection entry for outlet for its SID
   addConnection(country, key)
+    // then add the outlet data
     .then((id) => addOutlet(key, id))
     .then((id) => socket.emit('newOutlet', id))
     .catch((e) =>
       error(`index.js: connectOutlet.addConnection 
-    ${e.stack}`)
+    ${e.stack}
+    ${e.cause}`)
     );
+};
+
+const onAddPromo = (socket, promo) => {
+  const { key, name, promoUrl } = promo;
+  jLog(key, `index.js onOddPromo()) calling tqr.addPromo(${key})`);
+
+  addPromo({ key, name, promoUrl })
+    .then((id) => socket.emit('newPromo', id))
+    .catch((e) =>
+      error(`index.js: onAddPromo())
+       ${e.stack}
+       ${e.cause}`)
+    );
+};
+
+// TODO be sure client can specify - + values
+const onGetOutlets = (socket, key, sid1, sid2) => {
+  const startRange = sid1 ?? '-';
+  const endRange = sid2 ?? '+';
+  const cmd = [key, startRange, endRange];
+  log(cmd, 'onGetOutlets().key');
+  getOutlets(cmd).then((outlets) => {
+    socket.emit('gotOutlets', outlets);
+  });
+};
+
+const onGetPromos = (socket, key) => {
+  const promoKey = `${key}${key.endsWith(':') ? 'promotions' : ':promotions'}`;
+  console.log(promoKey);
+  getPromos(promoKey).then((promos) => socket.emit('gotPromos', promos));
 };
 
 //#endregion Helpers
@@ -133,18 +169,18 @@ io.on('connection', (socket) => {
   initConnection(socket);
 
   socket.on('addOutlet', ({ country, key }) =>
-    connectOutlet(socket, { country, key })
+    onAddOutlet(socket, { country, key })
   );
 
-  socket.on('addPromo', (promo) => {
-    const { key, name, promoUrl } = promo;
-    jLog(key, 'index.js on("addPromo") with key :>>');
-    addPromo({ key, name, promoUrl })
-      .then((id) => socket.emit('newPromo', id))
-      .catch((e) =>
-        error(`index.js: on("addPromo")
-       ${e.stack}`)
-      );
-  });
+  socket.on('addPromo', (promo) => onAddPromo(socket, promo));
+
+  socket.on('getOutlets', (key) => onGetOutlets(socket, key));
+  socket.on('getPromos', (key) => onGetPromos(socket, key));
+  socket.on('getCountries', () =>
+    getCountries().then((x) => {
+      console.log(x);
+      return x;
+    })
+  );
   //#endregion
 });

@@ -22,10 +22,57 @@ if (process.env.NODE_ENV === 'production') {
 const Redis = require('ioredis');
 const redis = new Redis(options);
 console.log('options:>>', options);
-//#endregion
 console.groupEnd();
+//#endregion Setup
 
 //#region Helpers
+
+const forPromo = (promos) => {
+  if (isEmpty(promos)) {
+    return 'no promos';
+  }
+  return promos.reduce((a, c) => {
+    const { name, promoUrl } = c;
+    a.push({ name, promoUrl });
+    return a;
+  }, []);
+};
+//#endregion Helpers
+
+//#region API
+/**
+ * `Add a connection to the stream for the given country.`
+ * @param country - The country code of the country the user is connecting from.
+ * @param nonce - A unique identifier for the connection.
+ */
+const addConnection = (country, nonce) =>
+  redis
+    .xadd(`${country}:connections`, '*', 'nonce', nonce)
+    .catch((e) => error(e));
+
+const addOutlet = (nonce, id) =>
+  redis
+    .xadd(`${nonce}`, '*', 'connectionID', id)
+    .catch((e) => console.log(err(e)));
+
+// xrange us 1642558471131-0 1642558471131-0
+const getOutlets = (cmd) =>
+  // redis returns a Promise<Map>}
+  redis.xrange(cmd).catch((e) => {
+    console.log(e, e.cause);
+  });
+
+// > xadd tqr:us1642558736304-0:promos * biz "Fika" promoText 'Welcome back Renee'
+const addPromo = ({ key, name, promoUrl }) =>
+  redis.xadd(key, '*', 'name', name, 'promoUrl', promoUrl);
+
+// xread tqr:us:1642558471131-0:promos 0
+const getPromos = (key) => redis.xread('STREAMS', key, '0');
+
+//#endregion API
+
+////////////////// Old Code //////////////////
+//#region Old Helpers
 const { error, success, jLog } = require('../utils/helpers.js');
 const {
   isEmpty,
@@ -33,9 +80,6 @@ const {
   objectFromStreamEntry,
   objectToKeyedArray,
 } = require('../utils/utils');
-
-const print = (json) => JSON.stringify(json, null, 2);
-const log = (text, label = 'data') => console.log(`${label} :>> `, text, '\n');
 
 const handleRedisError = (redisErr) => {
   console.log('redisError :>> ', redisErr.message);
@@ -56,42 +100,14 @@ const forThisSponsor = (sponsor) => ({
   ssid: sponsor.uid,
 });
 
-const forPromo = (sponsor) => {
-  if (isEmpty(sponsor)) {
-    return null;
-  }
-  return sponsor.reduce((a, c) => {
-    const { biz, promoText, dated, ssid } = c;
-    a.push({ biz, promoText, dated, ssid });
-    return a;
-  }, []);
-};
-
 const killSwitch = async (country) => {
   return redis.del(country);
 };
 
-//#endregion Helpers
-
-//#region API
+//#endregion Old Helpers
+//#region Old API
 
 //#region CREATE
-
-/**
- * `Add a connection to the stream for the given country.`
- * @param country - The country code of the country the user is connecting from.
- * @param nonce - A unique identifier for the connection.
- */
-const addConnection = (country, nonce) =>
-  redis
-    .xadd(`${country}:connections`, '*', 'nonce', nonce)
-    .catch((e) => error(e));
-
-const addOutlet = (nonce, id) =>
-  redis
-    .xadd(`${nonce}`, '*', 'connectionID', id)
-    .catch((e) => console.log(err(e)));
-
 /**
  * `addSponsor` is a function that takes a `key`, a `biz`, and a `uid` and adds them to the stream
  * `key` using the `xadd` command
@@ -100,18 +116,6 @@ const addSponsor = ({ key, biz, uid }) =>
   redis
     .xadd(`${key}`, '*', 'biz', biz, 'uid', uid)
     .catch((e) => console.log(err(e)));
-
-// > xadd tqr:us1642558736304-0:promos * biz "Fika" promoText 'Welcome back Renee'
-const addPromo = ({ key, name, promoUrl }) =>
-  redis.xadd(key, '*', 'name', name, 'promoUrl', promoUrl);
-
-// xread tqr:us:1642558471131-0:promos 0
-const getPromos = (key) =>
-  redis
-    .xread('STREAMS', key, '0')
-    .then((stream) => objectFromStream(stream))
-    .then((sponsors) => objectToKeyedArray(sponsors))
-    .then((data) => forPromo(data));
 
 // TODO this is weird. i used to be able to chain promises here
 // at least refactor this to use compose()...
@@ -174,10 +178,11 @@ const getRewards = (key) =>
     .catch((e) => console.log(err(e)));
 //#0endregion READ
 //#endregion API
-
-const TESTING = false;
+//#endregion Old API
+//////////////////////////////////////////////
 
 //#region Tests
+const TESTING = false;
 // TODO refactor tests for new strategy
 if (TESTING) {
   //#region Test Data
@@ -217,16 +222,16 @@ if (TESTING) {
   const p1 = addSponsor({ country: COUNTRY, biz, uid })
     .then((ssid) => updateBid(uid, ssid))
     .then((ssid) => getSponsor(COUNTRY, ssid))
-    .then((sponsor) => log(print(sponsor), 'Sponsor'))
+    .then((sponsor) => jLog(sponsor), 'Sponsor')
     .then(() => getSponsors(COUNTRY));
   const p2 = addSponsor({ country: COUNTRY, biz: biz2, uid: uid2 })
     .then((ssid) => updateBid(uid2, ssid))
     .then((ssid) => getSponsor(COUNTRY, ssid))
-    .then((sponsor) => log(print(sponsor), 'Sponsor'))
+    .then((sponsor) => jLog(sponsor), 'Sponsor')
     .then(() => getSponsors(COUNTRY));
 
   Promise.all([p0, p1, p2])
-    .then((promises) => log(print(promises), 'Sponsors'))
+    .then((promises) => jLog(promises), 'Sponsors')
     .then(() =>
       addReward({
         key: `${COUNTRY}:${bids[0].sid}:rewards`,
@@ -235,7 +240,7 @@ if (TESTING) {
       })
     )
     .then(() => getRewards(`${COUNTRY}:${bids[0].sid}:rewards`))
-    .then((rewards) => log(print(rewards), 'Rewards'))
+    .then((rewards) => jLog(rewards), 'Rewards')
     .then(() =>
       addPromo({
         country: `${COUNTRY}:${bids[1].sid}:promos`,
@@ -252,22 +257,30 @@ if (TESTING) {
     )
     .then(() => deleteStream(`${COUNTRY}:${bids[0].sid}:promos:${cids[0]}`))
     .then(() => getPromos(`${COUNTRY}:${bids[1].sid}:promos`))
-    .then((ps) => log(print(ps), 'Promos'))
+    .then((ps) => jLog(ps), 'Promos')
     .then(() => getCountries())
-    .then((countries) => log(print(countries)));
+    .then((countries) => jLog(countries));
   // NOTE: We return all Reward data, not a subset like the others
+}
+
+function getOutletsOk(key, sid1, sid2) {
+  const startRange = sid1 ?? '-';
+  const endRange = sid2 ?? '+';
+  return redis.xrange(key, startRange, endRange);
 }
 //#endregion Tests
 
 module.exports = {
+  getOutlets,
   addConnection,
   addOutlet,
   addPromo,
+  getPromos,
+
   addReward,
   addSponsor,
   deleteStream,
   getCountries,
-  getPromos,
   getSponsor,
   getRewards,
   getSponsors,
