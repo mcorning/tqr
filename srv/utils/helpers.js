@@ -13,6 +13,7 @@ const isValidJSON = (str) => {
   }
 };
 //#endregion
+const binaryHas = (score, val) => (score & val) === val;
 
 function error(e) {
   console.error(clc.red.bold(e));
@@ -92,6 +93,7 @@ function table(data) {
 }
 
 module.exports = {
+  binaryHas,
   clc,
   endSuccess,
   error,

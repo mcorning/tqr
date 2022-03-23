@@ -52,7 +52,7 @@ const io = socketIO(server);
  * @param country - the country of the Principal
  * @param nonce - any locally unique value;  e.g., a business license or address
  */
-// CALLED BY: initConnection()
+// CALLED BY: addOrFinishConnection()
 // RETURNS: an event that now includes the stream ID for the user
 // NOTE: the Stream ID serves as the connection ID for socket.io
 // const newConnection = (socket, { country, nonce }) => {
@@ -98,21 +98,24 @@ const finishConnection = (socket, nonce, lastDeliveredId, userID) => {
  * @param socket - the socket object
  * @returns The socket.id
  */
-const initConnection = (socket) => {
+const addOrFinishConnection = (socket) => {
   // auth can be a complex object modeling a Food Chain, Outlets, and Promotions
   const { auth } = socket.handshake;
   const { country, nonce, userID, lastDeliveredId = '$' } = auth;
+
+  // only called during onboarding...
   if (!userID && country && nonce) {
     addConnection(country, nonce)
       .then((id) => finishConnection(socket, nonce, lastDeliveredId, id))
       .then((newConnection) => socket.emit('newConnection', newConnection))
       .catch((e) =>
-        error(`index.js: initConnection.addConnection 
+        error(`index.js: addOrFinishConnection.addConnection 
     ${e.stack}
     ${e.cause}`)
       );
     return;
   }
+  // ...else finish connection
   finishConnection(socket, nonce, lastDeliveredId, userID);
   socket.emit('connected', { userID: socket.userID, nonce: socket.nonce });
 };
@@ -166,7 +169,7 @@ const onGetPromos = (socket, key) => {
 io.on('connection', (socket) => {
   notice(`About to handle on('connection') for ${socket.handshake.auth.nonce}`);
   //#region Handling socket connection
-  initConnection(socket);
+  addOrFinishConnection(socket);
 
   socket.on('addOutlet', ({ country, key }) =>
     onAddOutlet(socket, { country, key })
