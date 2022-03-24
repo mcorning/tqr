@@ -1,5 +1,6 @@
 //#region Setup
 const io = require('socket.io-client');
+// const socket = require('./socket.js');
 const { writeFile } = require('fs');
 const {
   binaryHas,
@@ -13,56 +14,56 @@ const {
   clc,
 } = require('../srv/utils/helpers');
 
+const argsArray = process.argv.slice(2);
+const args = reducePairsToObject(argsArray);
 const onboard = args.length == 2; // no app args means we start from beginning
 if (!onboard) {
   console.group('Expand for options and args...');
-  const argsArray = process.argv.slice(2);
-  const args = reducePairsToObject(argsArray);
   log(args, 'args:');
   table([args]);
   log();
 }
 
-const dataFile = onboard ? './auth.onboard.json' : './auth.json';
-const data = require(dataFile);
-const USER_ID = args.userID || data.chain.userID;
-const NONCE = args.nonce || data.chain.nonce;
-const SCOPE = args.scope || '';
-const COUNTRY = args.country || data.chain.country;
+const USER_ID = args.userID;
+const NONCE = args.nonce;
+const SCOPE = args.scope;
+const COUNTRY = args.country;
 const auth = {
   userID: USER_ID,
   nonce: NONCE,
-  country: data.chain.country,
+  country: COUNTRY,
 };
-const promoScope = [...['', 'Delivery'], ...data.outlets.map((v) => v.nonce)];
+//   const promoScope = [...['', 'Delivery'], ...data.outlets.map((v) => v.nonce)];
 
 const options = {
   reconnectionDelayMax: 10_000,
+  autoConnect: false,
   auth,
 };
 jLog(options, 'options :>> ');
 
 const TESTS = {
   null: 0,
-  addAgency: 1,
-  addPromotion: 1 << 1,
-  getPromotions: 1 << 2,
+  connectMe: 1,
+  addAgency: 1 << 1,
+  addPromotion: 1 << 2,
+  getPromotions: 1 << 3,
 };
-
-const TEST = 0; //TESTS.addPromotion + TESTS.getPromotions;
 
 console.groupEnd();
 
 //#endregion Setup
 
 /////////////////// Main Entry Point ///////////////////
-
+// called after options set up above
 const socket = io.connect('http://localhost:3333', options);
 
 ////////////////////////////////////////////////////////
 
 //#region Helpers
-
+const onAddConnection = ({ country, agency }) => {
+  socket.emit('addConnection', { country, nonce: agency });
+};
 // "promotions": [
 //     {
 //         "name": "NETS Eat & Win",
@@ -71,8 +72,8 @@ const socket = io.connect('http://localhost:3333', options);
 //     },
 //  ]
 const getPromo = (promo) => {
-  const root = `${data.chain.country}:${data.chain.nonce}`;
-  const outlet = promoScope.find((v) => v === promo.scope);
+  const root = `${COUNTRY}:${NONCE}`;
+  const outlet = SCOPE;
   const scopeKey = outlet ? `:${outlet}` : '';
   const keyBase = `${root}${scopeKey}`;
   const key = `${keyBase}:promotions`;
@@ -84,6 +85,15 @@ const getPromo = (promo) => {
 };
 const disconnected = () => {
   notice('Disconnected', clc.yellow);
+};
+
+const connectMe = ({ userID, country, nonce }) => {
+  socket.auth = {
+    userID,
+    nonce,
+    country,
+  };
+  socket.connect();
 };
 
 const getPromotions = () => {
@@ -99,7 +109,7 @@ const addOutlet = (outlet) =>
 
 const addPromo = (promo) => socket.emit('addPromo', getPromo(promo));
 
-const getAllOutlets = () => {
+const getAllConnections = () => {
   const key = `${COUNTRY}:connections`;
   socket.emit('getOutlets', key);
 };
@@ -127,6 +137,7 @@ socket.on('connected', ({ userID, nonce }) => {
   if (TEST) {
     test();
   }
+  return { userID, nonce };
 });
 
 socket.on('disconnect', disconnected);
@@ -148,9 +159,16 @@ socket.on('gotPromos', (promos) => showMap(promos, 'promos :>>'));
 socket.on('gotOutlets', (map) => showMap(map, 'outlets :>>'));
 //#endregion Socket handlers
 
-// TEST set above socket.on('connected')
+const TEST = 0;
 const test = () => {
+  if (TEST === 0) {
+    return;
+  }
   console.log('Testing...');
+  if (binaryHas(TEST, TESTS.connectMe)) {
+    console.log('connectMe()...');
+    connectMe({ userID: '', country: 'us', nonce: 'Pops' });
+  }
   if (binaryHas(TEST, TESTS.addAgency)) {
     console.log('addAgency()...');
     addOutlet({ COUNTRY, NONCE: 'test' });
@@ -170,4 +188,13 @@ const test = () => {
   }
 };
 
-module.exports = { addPromo, addOutlet, getPromotions, getAllOutlets };
+test();
+
+module.exports = {
+  connectMe,
+  onAddConnection,
+  addPromo,
+  addOutlet,
+  getPromotions,
+  getAllConnections,
+};

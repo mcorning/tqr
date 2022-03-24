@@ -53,22 +53,20 @@ const io = socketIO(server);
  * @param nonce - any locally unique value;  e.g., a business license or address
  */
 // CALLED BY: addOrFinishConnection()
-// RETURNS: an event that now includes the stream ID for the user
+// RETURNS: by emitting a newConnection message that now includes the stream ID for the user
 // NOTE: the Stream ID serves as the connection ID for socket.io
-// const newConnection = (socket, { country, nonce }) => {
-//   console.log({ country, nonce });
-//   addConnection(country, nonce).then((id) => {
-//     // emit new session details so the client can store the session in localStorage
-//     socket.emit('newUserID', {
-//       country,
-//       nonce,
-//       userID: id,
-//       lastDeliveredId: '$',
-//     });
-//   });
-// };
-const finishConnection = (socket, nonce, lastDeliveredId, userID) => {
-  console.groupCollapsed('io.on(connection)');
+const onAddConnection = (socket, { country, nonce, lastDeliveredId }) => {
+  addConnection(country, nonce)
+    .then((id) => joinSocketRoom(socket, nonce, lastDeliveredId, id))
+    .then((newConnection) => socket.emit('newConnection', newConnection))
+    .catch((e) =>
+      error(`index.js: addOrFinishConnection.addConnection 
+    ${e.stack}
+    ${e.cause}`)
+    );
+};
+const joinSocketRoom = (socket, nonce, lastDeliveredId, userID) => {
+  console.groupCollapsed('io.on(connection).joinSocketRoom()');
   const conn = {
     nonce,
     socketID: socket.id,
@@ -105,18 +103,11 @@ const addOrFinishConnection = (socket) => {
 
   // only called during onboarding...
   if (!userID && country && nonce) {
-    addConnection(country, nonce)
-      .then((id) => finishConnection(socket, nonce, lastDeliveredId, id))
-      .then((newConnection) => socket.emit('newConnection', newConnection))
-      .catch((e) =>
-        error(`index.js: addOrFinishConnection.addConnection 
-    ${e.stack}
-    ${e.cause}`)
-      );
+    onAddConnection(socket, { country, nonce, lastDeliveredId });
     return;
   }
   // ...else finish connection
-  finishConnection(socket, nonce, lastDeliveredId, userID);
+  joinSocketRoom(socket, nonce, lastDeliveredId, userID);
   socket.emit('connected', { userID: socket.userID, nonce: socket.nonce });
 };
 
@@ -163,27 +154,31 @@ const onGetPromos = (socket, key) => {
   getPromos(promoKey).then((promos) => socket.emit('gotPromos', promos));
 };
 
+const onGetCountries = getCountries().then((x) => {
+  console.log(x);
+  return x;
+});
 //#endregion Helpers
 
-/* The above code is sending a request to the server to get the list of countries. */
+/**
+ * A socket auth may have a userID. If not, we need to add a connection to the Redis Stream.
+ */
 io.on('connection', (socket) => {
   notice(`About to handle on('connection') for ${socket.handshake.auth.nonce}`);
-  //#region Handling socket connection
+
   addOrFinishConnection(socket);
 
   socket.on('addOutlet', ({ country, key }) =>
     onAddOutlet(socket, { country, key })
   );
 
+  socket.on('addConnection', ({ country, nonce, lastDeliveredId }) =>
+    onAddConnection(socket, { country, nonce, lastDeliveredId })
+  );
   socket.on('addPromo', (promo) => onAddPromo(socket, promo));
 
   socket.on('getOutlets', (key) => onGetOutlets(socket, key));
   socket.on('getPromos', (key) => onGetPromos(socket, key));
-  socket.on('getCountries', () =>
-    getCountries().then((x) => {
-      console.log(x);
-      return x;
-    })
-  );
+  socket.on('getCountries', () => onGetCountries());
   //#endregion
 });
