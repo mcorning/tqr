@@ -1,7 +1,7 @@
 //#region Setup
 const io = require('socket.io-client');
-// const socket = require('./socket.js');
-const { writeFile } = require('fs');
+const socket = io.connect('http://localhost:3333', { autoConnect: false });
+
 const {
   binaryHas,
   error,
@@ -16,14 +16,13 @@ const {
 
 const argsArray = process.argv.slice(2);
 const args = reducePairsToObject(argsArray);
-const onboard = args.length == 2; // no app args means we start from beginning
-if (!onboard) {
-  console.group('Expand for options and args...');
+const onboard = args.length > 2; // no app args means we start from beginning
+console.groupCollapsed('Expand for options and args...');
+if (onboard) {
   log(args, 'args:');
   table([args]);
   log();
 }
-
 const USER_ID = args.userID;
 const NONCE = args.nonce;
 const SCOPE = args.scope;
@@ -42,28 +41,24 @@ const options = {
 };
 jLog(options, 'options :>> ');
 
-const TESTS = {
-  null: 0,
-  connectMe: 1,
-  addAgency: 1 << 1,
-  addPromotion: 1 << 2,
-  getPromotions: 1 << 3,
-};
-
 console.groupEnd();
 
 //#endregion Setup
 
-/////////////////// Main Entry Point ///////////////////
-// called after options set up above
-const socket = io.connect('http://localhost:3333', options);
-
-////////////////////////////////////////////////////////
-
 //#region Helpers
-const onAddConnection = ({ country, agency }) => {
-  socket.emit('addConnection', { country, nonce: agency });
-};
+// testing and clients start processing here.
+// index.js:io.on('connection') will not see a userID,
+// so first thing, it creates a new connection on Redis Stream db
+const connectMe = () => Promise.resolve(socket.connect());
+
+const onAddConnection = ({ country, nonce }) =>
+  // TODO how do we handle an error in the Promise?
+  new Promise((resolve) =>
+    socket.emit('addConnection', { country, nonce }, (newConn) =>
+      resolve(newConn)
+    )
+  );
+
 // "promotions": [
 //     {
 //         "name": "NETS Eat & Win",
@@ -87,25 +82,10 @@ const disconnected = () => {
   notice('Disconnected', clc.yellow);
 };
 
-const connectMe = ({ userID, country, nonce }) => {
-  socket.auth = {
-    userID,
-    nonce,
-    country,
-  };
-  socket.connect();
-};
-
 const getPromotions = () => {
   const key = `${COUNTRY}:${NONCE}:${SCOPE}`;
   socket.emit('getPromos', key);
 };
-
-const addOutlet = (outlet) =>
-  socket.emit('addOutlet', {
-    country: outlet.country,
-    key: `${newChain.nonce}@${outlet.nonce}`,
-  });
 
 const addPromo = (promo) => socket.emit('addPromo', getPromo(promo));
 
@@ -134,9 +114,7 @@ const reduceMap = (map) =>
 //#region Socket handlers
 socket.on('connected', ({ userID, nonce }) => {
   success(`Welcome back, ${userID} ${nonce}`);
-  if (TEST) {
-    test();
-  }
+
   return { userID, nonce };
 });
 
@@ -146,55 +124,23 @@ socket.on('newOutlet', (newOutlet) => success(`newOutlet: ${newOutlet}`));
 
 socket.on('newPromo', (newPromo) => success(`newPromo: ${newPromo}`));
 
-// handled only when onboarding
-socket.on('newConnection', (newChain) => {
-  notice('Handling on newConnection: >>');
-  jLog(newChain, 'New chain:');
-  const filePath = `${__dirname}\\${newChain.nonce}.json`;
-  writeFile(filePath, JSON.stringify(newChain), (err) => error(err));
-});
-
 socket.on('gotPromos', (promos) => showMap(promos, 'promos :>>'));
 
 socket.on('gotOutlets', (map) => showMap(map, 'outlets :>>'));
+
+socket.on('newConnection', (newConn) => {
+  log(newConn);
+  log(socket.userID);
+});
 //#endregion Socket handlers
-
-const TEST = 0;
-const test = () => {
-  if (TEST === 0) {
-    return;
-  }
-  console.log('Testing...');
-  if (binaryHas(TEST, TESTS.connectMe)) {
-    console.log('connectMe()...');
-    connectMe({ userID: '', country: 'us', nonce: 'Pops' });
-  }
-  if (binaryHas(TEST, TESTS.addAgency)) {
-    console.log('addAgency()...');
-    addOutlet({ COUNTRY, NONCE: 'test' });
-  }
-
-  if (binaryHas(TEST, TESTS.addPromotion)) {
-    console.log('addPromo()...');
-    addPromo({
-      name: 'Get Sauced at Pops',
-      url: 'https://www.popsouthernbbq.com/menu',
-    });
-  }
-
-  if (binaryHas(TEST, TESTS.getPromotions)) {
-    console.log('getPromotions()...');
-    getPromotions();
-  }
-};
-
-test();
+const newConnection = [];
+const getNewConnection = () => newConnection;
 
 module.exports = {
   connectMe,
   onAddConnection,
   addPromo,
-  addOutlet,
+  getNewConnection,
   getPromotions,
   getAllConnections,
 };

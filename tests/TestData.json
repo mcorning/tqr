@@ -1,0 +1,19 @@
+{
+    "nonces": [
+        {
+            "country": "sg",
+            "nonce": "FoodRepublic",
+            "userID": "1647651211684-0"
+        },
+        {
+            "country": "sg",
+            "nonce": "BreadTalk",
+            "userID": "1647651211769-0"
+        },
+        {
+            "nonce": "Pops BBQ Truck:Bend Truck",
+            "socketID": "KvxQhiIPpbfqQsfpAAAB",
+            "userID": "1648189295126-0"
+        }
+    ]
+}

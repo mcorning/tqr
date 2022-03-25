@@ -166,17 +166,13 @@ const onGetCountries = getCountries().then((x) => {
 });
 //#endregion Helpers
 
-/** io.on('connection')
+/**
  * A socket auth may have a userID. If not, we need to add a connection to the Redis Stream.
  */
 io.on('connection', (socket) => {
   notice(`About to handle on('connection') for ${socket.handshake.auth.nonce}`);
 
-  socket.on('addConnection', ({ country, nonce, lastDeliveredId }, ack) => {
-    onAddConnection(socket, { country, nonce, lastDeliveredId })
-      .then((x) => safeAck(ack, x))
-      .catch((e) => e);
-  });
+  addOrFinishConnection(socket);
 
   socket.on('test', (msg, ack) => {
     console.log(msg);
@@ -185,5 +181,19 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('addOutlet', ({ country, key }) =>
+    onAddOutlet(socket, { country, key })
+  );
+
+  socket.on('addConnection', ({ country, nonce, lastDeliveredId }, ack) => {
+    onAddConnection(socket, { country, nonce, lastDeliveredId })
+      .then((x) => safeAck(ack, x))
+      .catch((e) => e);
+  });
+  socket.on('addPromo', (promo) => onAddPromo(socket, promo));
+
+  socket.on('getOutlets', (key) => onGetOutlets(socket, key));
+  socket.on('getPromos', (key) => onGetPromos(socket, key));
+  socket.on('getCountries', () => onGetCountries());
   //#endregion
 });

@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "start": "node tests"
+  },
+  "dependencies": {
+    "node-json-db": "^1.5.0"
+  }
+}
