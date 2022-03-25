@@ -56,7 +56,7 @@ const addOutlet = (nonce, id) =>
     .catch((e) => console.log(err(e)));
 
 // xrange us 1642558471131-0 1642558471131-0
-const getOutlets = (cmd) =>
+const getConnections = (cmd) =>
   // redis returns a Promise<Map>}
   redis.xrange(cmd).catch((e) => {
     console.log(e, e.cause);
@@ -271,7 +271,7 @@ function getOutletsOk(key, sid1, sid2) {
 //#endregion Tests
 
 module.exports = {
-  getOutlets,
+  getConnections,
   addConnection,
   addOutlet,
   addPromo,

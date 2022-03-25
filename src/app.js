@@ -1,5 +1,8 @@
+// @ts-check
 //#region Setup
+// @ts-ignore
 const io = require('socket.io-client');
+const { addConnection } = require('../srv/redis/tqr');
 const socket = io.connect('http://localhost:3333', { autoConnect: false });
 
 const {
@@ -19,7 +22,7 @@ const args = reducePairsToObject(argsArray);
 const onboard = args.length > 2; // no app args means we start from beginning
 console.groupCollapsed('Expand for options and args...');
 if (onboard) {
-  log(args, 'args:');
+  log(`args: ${args}`);
   table([args]);
   log();
 }
@@ -47,8 +50,6 @@ console.groupEnd();
 
 //#region Helpers
 // testing and clients start processing here.
-// index.js:io.on('connection') will not see a userID,
-// so first thing, it creates a new connection on Redis Stream db
 const connectMe = () => Promise.resolve(socket.connect());
 
 const onAddConnection = ({ country, nonce }) =>
@@ -89,9 +90,9 @@ const getPromotions = () => {
 
 const addPromo = (promo) => socket.emit('addPromo', getPromo(promo));
 
-const getAllConnections = () => {
-  const key = `${COUNTRY}:connections`;
-  socket.emit('getOutlets', key);
+const getConnections = (country, sid1 = '-', sid2 = '+') => {
+  const key = `${country}:connections`;
+  socket.emit('getConnections', key, sid1, sid2);
 };
 
 // TODO use this Map/Reduce everywhere
@@ -126,21 +127,14 @@ socket.on('newPromo', (newPromo) => success(`newPromo: ${newPromo}`));
 
 socket.on('gotPromos', (promos) => showMap(promos, 'promos :>>'));
 
-socket.on('gotOutlets', (map) => showMap(map, 'outlets :>>'));
+socket.on('gotConnections', (map) => showMap(map, 'connections :>>'));
 
-socket.on('newConnection', (newConn) => {
-  log(newConn);
-  log(socket.userID);
-});
 //#endregion Socket handlers
-const newConnection = [];
-const getNewConnection = () => newConnection;
 
 module.exports = {
   connectMe,
   onAddConnection,
   addPromo,
-  getNewConnection,
   getPromotions,
-  getAllConnections,
+  getConnections,
 };

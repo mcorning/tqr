@@ -1,9 +1,12 @@
+// @ts-check
 console.clear();
 //#region Setup
+// @ts-ignore
 require('clarify');
 
 const path = require('path');
 const express = require('express');
+// @ts-ignore
 const socketIO = require('socket.io');
 const serveStatic = require('serve-static');
 
@@ -13,7 +16,7 @@ const dirPath = path.join(__dirname, '../dist');
 const {
   addConnection,
   addOutlet,
-  getOutlets,
+  getConnections,
   addPromo,
   getPromos,
 
@@ -53,31 +56,34 @@ const safeAck = (ack, msg) => {
 };
 
 /**
- * Create a new user ID and add it to the database.
- * @param socket - the socket that is connecting to the server
- * @param country - the country of the Principal
- * @param nonce - any locally unique value;  e.g., a business license or address
+ * Create a new user ID and add it to the Redis database.
+ * @param {Object} socket - the socket that is connecting to the server
+ * @param { Object } connection - the Connection data for Redis Stream
+ * @param { string } connection.country - country where entity exists
+ * @param { string } connection.nonce - key value for Redis Stream
+ * @param { string } connection.lastDeliveredId - ID used by Redis to query Stream
+ * @returns {Promise} by emitting a newConnection message that now includes the stream ID for the user
+ * <br/>NOTE: the Stream ID serves as the connection ID for socket.io
+ * @see addOrFinishConnection()
  */
-// CALLED BY: addOrFinishConnection()
-// RETURNS: by emitting a newConnection message that now includes the stream ID for the user
-// NOTE: the Stream ID serves as the connection ID for socket.io
+//
 const onAddConnection = (socket, { country, nonce, lastDeliveredId }) =>
   addConnection(country, nonce)
-    .then((id) => joinSocketRoom(socket, nonce, lastDeliveredId, id))
-    .then((newConnection) => newConnection)
+    .then((id) => joinSocketRoom(socket, country, nonce, lastDeliveredId, id))
     .catch((e) =>
       error(`index.js: addOrFinishConnection.addConnection 
     ${e.stack}
     ${e.cause}`)
     );
 
-const joinSocketRoom = (socket, nonce, lastDeliveredId, userID) => {
+const joinSocketRoom = (socket, country, nonce, lastDeliveredId, userID) => {
   console.groupCollapsed('io.on(connection).joinSocketRoom()');
   const conn = {
+    country,
     nonce,
-    socketID: socket.id,
     userID,
     lastDeliveredId,
+    socketID: socket.id,
   };
   const tableData = [conn];
   console.table(tableData);
@@ -134,23 +140,16 @@ const onAddPromo = (socket, promo) => {
   const { key, name, promoUrl } = promo;
   jLog(key, `index.js onOddPromo()) calling tqr.addPromo(${key})`);
 
-  addPromo({ key, name, promoUrl })
-    .then((id) => socket.emit('newPromo', id))
-    .catch((e) =>
-      error(`index.js: onAddPromo())
-       ${e.stack}
-       ${e.cause}`)
-    );
+  const id = addPromo({ key, name, promoUrl });
+  socket.emit('newPromo', id);
 };
 
 // TODO be sure client can specify - + values
-const onGetOutlets = (socket, key, sid1, sid2) => {
-  const startRange = sid1 ?? '-';
-  const endRange = sid2 ?? '+';
-  const cmd = [key, startRange, endRange];
-  log(cmd, 'onGetOutlets().key');
-  getOutlets(cmd).then((outlets) => {
-    socket.emit('gotOutlets', outlets);
+const onGetConnections = (socket, key, sid1, sid2) => {
+  const cmd = [key, sid1, sid2];
+  jLog(cmd, 'onGetConnections().cmd:');
+  getConnections(cmd).then((conns) => {
+    socket.emit('gotConnections', conns);
   });
 };
 
@@ -177,6 +176,10 @@ io.on('connection', (socket) => {
       .then((x) => safeAck(ack, x))
       .catch((e) => e);
   });
+
+  socket.on('getConnections', (key, sid1, sid2) =>
+    onGetConnections(socket, key, sid1, sid2)
+  );
 
   socket.on('test', (msg, ack) => {
     console.log(msg);

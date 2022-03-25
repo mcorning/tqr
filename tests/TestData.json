@@ -1,24 +1,10 @@
 {
-    "nonces": [
+    "connections": [
         {
             "country": "sg",
-            "nonce": "FoodRepublic",
-            "userID": "1647651211684-0"
-        },
-        {
-            "country": "sg",
-            "nonce": "BreadTalk",
-            "userID": "1647651211769-0"
-        },
-        {
-            "nonce": "Pops BBQ Truck:Bend Truck",
-            "socketID": "KvxQhiIPpbfqQsfpAAAB",
-            "userID": "1648189295126-0"
-        },
-        {
-            "nonce": "Pops BBQ Truck:Bend Truck",
-            "socketID": "3xMVZDM6I4_rim63AAAD",
-            "userID": "1648189746884-0"
+            "nonce": "Food Republic",
+            "userID": "1648231292003-0",
+            "socketID": "Xkj6wCugd8QB2LcAAAAF"
         }
     ]
 }
