@@ -59,6 +59,11 @@ const onAddConnection = ({ country, nonce }) =>
       resolve(newConn)
     )
   );
+const onAddAnonConnection = ({ country }) =>
+  // TODO how do we handle an error in the Promise?
+  new Promise((resolve) =>
+    socket.emit('addConnection', { country }, (newConn) => resolve(newConn))
+  );
 
 // "promotions": [
 //     {
@@ -97,7 +102,7 @@ const getConnections = (country, sid1 = '-', sid2 = '+') => {
 
 // TODO use this Map/Reduce everywhere
 const showMap = (map, msg) => {
-  console.groupCollapsed(`expand for ${msg}`);
+  console.group(`app.js: Collapse/Expand for ${msg}`);
   const mapArray = reduceMap(map);
   jLog(mapArray, msg);
   console.groupEnd();
@@ -133,6 +138,7 @@ socket.on('gotConnections', (map) => showMap(map, 'connections :>>'));
 
 module.exports = {
   connectMe,
+  onAddAnonConnection,
   onAddConnection,
   addPromo,
   getPromotions,

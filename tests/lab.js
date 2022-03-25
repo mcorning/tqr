@@ -9,38 +9,44 @@ const { Config } = require('node-json-db/dist/lib/JsonDBConfig');
 var db = new JsonDB(new Config('tests/TestData', true, false, '/'));
 let data = db.getData('/');
 console.log(JSON.stringify(data, null, 3));
+const setup = false;
+const find = (someNonce) =>
+  db.find('/connections', (v) => v.nonce === someNonce);
 
-// Pushing the data into the database
-// With the wanted DataPath
-// By default the push will override the old value
-db.push(
-  '/nonces[0]',
-  {
-    country: 'sg',
-    nonce: 'FoodRepublic',
-    userID: '1647651211684-0',
-  },
-  true
-);
+if (setup) {
+  // Pushing the data into the database
+  // With the wanted DataPath
+  // By default the push will override the old value
+  db.push(
+    '/nonces[0]',
+    {
+      country: 'sg',
+      nonce: 'FoodRepublic',
+      userID: '1647651211684-0',
+    },
+    true
+  );
 
-// It also create automatically the hierarchy when pushing new data for a DataPath that doesn't exists
-// db.push('/test2/my/test', 5);
+  // It also create automatically the hierarchy when pushing new data for a DataPath that doesn't exists
+  // db.push('/test2/my/test', 5);
 
-// You can also push directly objects
-// db.push('/test3', { test: 'test', json: { test: ['test'] } });
+  // You can also push directly objects
+  // db.push('/test3', { test: 'test', json: { test: ['test'] } });
 
-// Get the data from the root
-data = db.getData('/');
-console.log(JSON.stringify(data, null, 3));
-// From a particular DataPath
-db.push(
-  '/nonces[]',
-  {
-    country: 'sg',
-    nonce: 'BreadTalk',
-    userID: '1647651211769-0',
-  },
-  true
-);
-data = db.getData('/');
-console.log(JSON.stringify(data, null, 3));
+  // Get the data from the root
+  data = db.getData('/');
+  console.log(JSON.stringify(data, null, 3));
+  // From a particular DataPath
+  db.push(
+    '/nonces[]',
+    {
+      country: 'sg',
+      nonce: 'BreadTalk',
+      userID: '1647651211769-0',
+    },
+    true
+  );
+  data = db.getData('/');
+  console.log(JSON.stringify(data, null, 3));
+}
+console.log(find('Food Republic'));

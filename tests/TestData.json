@@ -5,6 +5,32 @@
             "nonce": "Food Republic",
             "userID": "1648231292003-0",
             "socketID": "Xkj6wCugd8QB2LcAAAAF"
+        },
+        {
+            "country": "sg",
+            "nonce": "Suntec City",
+            "userID": "1648237675672-0",
+            "socketID": "iGY_Rfh4BLMVHUsaAAAB"
+        },
+        {
+            "country": "sg",
+            "userID": "1648240952233-0",
+            "socketID": "uFKsSREeTZ_bIYkTAAAB"
+        },
+        {
+            "country": "sg",
+            "userID": "1648241252650-0",
+            "socketID": "XXjUFMxHIdwo0WWMAAAD"
+        },
+        {
+            "country": "sg",
+            "userID": "1648241418514-0",
+            "socketID": "LKdECS5OIXMWmN7AAAAF"
+        },
+        {
+            "country": "sg",
+            "userID": "1648241483778-0",
+            "socketID": "Ryjf3OxJEDY3yD6_AAAH"
         }
     ]
 }

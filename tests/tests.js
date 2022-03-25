@@ -5,10 +5,18 @@
  * to test the TQR client (app.js).
  *
  * DATA
- * There are two kinds of test data.
- * TestData is a database with existing connections in the Redis Streams database.
- * The connection consists in a country, nonce, and userID.
- * A nonce is a string key used by Redis Streams to return a userID.
+ * Anonymous Engagement processes two kinds of data: AGENCY data and ANON data.
+ * AGENCY data stipulates a NONCE. A nonce is a string key used by Redis Streams to return 
+ * a userID for the connection. The userID also serves as an identifier for Socket.IO.
+ 
+ * ANON data uses the NULL NONCE.
+
+ * In addition the nonce property, both AGENCY and ANON data include country and userID properties.
+ * The Redis Streams database collects AGENCY and ANON data in the CONNECTIONS stream.
+ * 
+ * TEST DATA 
+ * There are two kinds of test data: Data stored in the TestData db, and ENUMs defined in code.
+ * TestData is a database with *existing* connections in the Redis Streams database.
  * The NONCES enum can have any other keys used to create new connections and to test
  * that the client doesn't duplicated keys in the Stream (note: duplicate keys are
  * permissible in Redis Stream, but this breaks referntial integrity for the client).
@@ -23,6 +31,8 @@
  *
  * @see app.js
  */
+
+//#region Setup
 const app = require('../src/app');
 const {
   binaryHas,
@@ -37,6 +47,7 @@ const {
   warn,
   clc,
 } = require('../srv/utils/helpers');
+//#endregion Setup
 
 //#region Database
 // very cool json db: https://belphemur.github.io/node-json-db/#appending-in-array
@@ -61,13 +72,29 @@ const pushNewConnection = (conn) => {
   jLog(db.getData('/'), 'TestData :>>');
   log();
 };
+const canAddConnection = (checkNonce) => {
+  const okToAdd = isEmpty(find(checkNonce));
+  if (!okToAdd) {
+    warn(
+      `You cannot add a connection to ${checkNonce} because that already exists in Redis`
+    );
+  }
+  return okToAdd;
+};
+
+const find = (someNonce) =>
+  db.find('/connections', (v) => v.nonce === someNonce);
+
+const getIndex = (newNonce) => db.getIndex('/connections', newNonce, 'nonce');
+
 //#endregion Database
 
 const keyDelimiter = '@';
 // A nonce is a Named-Once string locally unique (at least at country level) that identifies an AGENCY.
 // An AGENCY is any legal entity participating in Anonymous Engagement such as TQR.
 // An AGENT is any authorized person in an AGENCY (e.g., a store manager).
-// You can string NONCES together with the keyDelimiter to make a key for Redis Streams
+// You can string NONCES together with the keyDelimiter to make a key for Redis Streams.
+// A null NONCE indicates the other (anonymous) party in the engagement.
 const NONCES = {
   PopsBbqTruck: 'Pops BBQ Truck',
   BendTruck: 'Bend Truck',
@@ -98,15 +125,22 @@ if (firstTest) {
   // TODO setup your own entity enum
   connection.nonce = AGENCY.FoodRepublic;
 } else {
-  // TODO Randomize selection of connection
-  const agency = 'Food Republic';
-  const idx = db.getIndex('/connections', agency, 'nonce');
-  log(`index for ${agency}: ${idx}`);
-  const conn = db.getData(`/connections[${idx}]`);
-  jLog(conn, `${agency} :>>`);
-  connection.country = conn.country;
-  connection.nonce = conn.nonce;
-  connection.userID = conn.userID;
+  const newNonce = NONCES.SuntecCity;
+  const idx = getIndex(newNonce);
+  log(`index for ${newNonce}: ${idx}`);
+
+  if (idx === -1) {
+    connection.country = 'sg';
+    connection.nonce = newNonce;
+    connection.userID = '';
+  } else {
+    // TODO Randomize selection of connection
+    const conn = db.getData(`/connections[${idx}]`);
+    jLog(conn, `${newNonce} :>>`);
+    connection.country = conn.country;
+    connection.nonce = conn.nonce;
+    connection.userID = conn.userID;
+  }
 }
 
 const STEPS = {
@@ -115,6 +149,7 @@ const STEPS = {
   getConnections: 1 << 1,
   addPromotion: 1 << 2,
   getPromotions: 1 << 3,
+  addAnon: 1 << 4,
 };
 
 const TESTS = {
@@ -122,9 +157,11 @@ const TESTS = {
   getConnections: STEPS.getConnections,
   addPromo: STEPS.addPromotion,
   getPromos: STEPS.getPromotions,
+  onboardAndGetConnections: STEPS.onAddConnection + STEPS.getConnections,
+  onboardAnon: STEPS.addAnon,
 };
 
-const TEST = TESTS.getConnections;
+const TEST = TESTS.onboardAnon + TESTS.getConnections;
 
 notice('Connecting...');
 // connect to server and to Redis
@@ -135,14 +172,19 @@ const test = () => {
   notice('Testing...');
   if (binaryHas(TEST, TESTS.onboard)) {
     log('TEST: onAddConnection()...');
-    if (!firstTest) {
-      warn('This version does not permit addConnection after firstTest');
-      return;
+    if (canAddConnection(connection.nonce)) {
+      app
+        .onAddConnection(connection)
+        .then((newConn) => pushNewConnection(newConn))
+        .catch((e) => error(jLog(e, 'Error in onAddConnection() chain')));
     }
+  }
+  if (binaryHas(TEST, TESTS.onboardAnon)) {
+    log('TEST: onAddAnonConnection()...');
     app
-      .onAddConnection(connection)
+      .onAddAnonConnection(connection)
       .then((newConn) => pushNewConnection(newConn))
-      .catch((e) => error(jLog(e, 'Error in onAddConnection() chain')));
+      .catch((e) => error(jLog(e, 'Error in onAddAnonConnection() chain')));
   }
 
   if (binaryHas(TEST, TESTS.getConnections)) {
