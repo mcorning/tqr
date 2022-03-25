@@ -1,3 +1,5 @@
+// very cool json db: https://belphemur.github.io/node-json-db/#appending-in-array
+
 const app = require('../src/app');
 const {
   binaryHas,
@@ -13,12 +15,17 @@ const {
 
 const { JsonDB } = require('node-json-db');
 const { Config } = require('node-json-db/dist/lib/JsonDBConfig');
+// be sure to start with the current dir name,
+// otherwise, the data file goes to the parent folder
+// or if you start the string with '/' the file will be on the PC's root dir
 const db = new JsonDB(new Config('tests/TestData', true, true, '/'));
 
 const data = db.getData('/');
 jLog(data, 'TestData.json :>>');
 log();
-log(db.getIndex('/nonces', 'BreadTalk', 'nonce'));
+const idx = db.getIndex('/nonces', 'BreadTalk', 'nonce');
+log(idx, 'index for BreadTalk');
+jLog(db.getData(`/nonces[${idx}]`), 'BreadTalk :>>');
 // you can string NONCES together to make a key for Redis Stream
 const NONCES = {
   PopsBbqTruck: 'Pops BBQ Truck',
