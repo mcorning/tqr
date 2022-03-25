@@ -1,0 +1,28 @@
+{
+  "name": "engage-anon",
+  "version": "1.0.0",
+  "description": "Anonymous Engagement permits public entities to engage with private individuals anonymously.",
+  "main": ".eslintrc.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node tests/tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mcorning/tqr.git"
+  },
+  "keywords": [
+    "anonymous",
+    "engagement",
+    "tqr",
+    "cvew"
+  ],
+  "author": "Michael Corning",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mcorning/tqr/issues"
+  },
+  "homepage": "https://github.com/mcorning/tqr#readme"
+}
