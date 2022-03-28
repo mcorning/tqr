@@ -34,6 +34,7 @@
 
 //#region Setup
 const app = require('../src/app');
+const tqr = require('../src/tqr');
 const {
   binaryHas,
   error,
@@ -41,7 +42,6 @@ const {
   jLog,
   notice,
   isEmpty,
-  reducePairsToObject,
   success,
   table,
   warn,
@@ -89,7 +89,6 @@ const getIndex = (newNonce) => db.getIndex('/connections', newNonce, 'nonce');
 
 //#endregion Database
 
-const keyDelimiter = '@';
 // A nonce is a Named-Once string locally unique (at least at country level) that identifies an AGENCY.
 // An AGENCY is any legal entity participating in Anonymous Engagement such as TQR.
 // An AGENT is any authorized person in an AGENCY (e.g., a store manager).
@@ -105,9 +104,9 @@ const NONCES = {
 // Agency is a keyDelimiter-delimited string of Agents beginning with a Pricipal
 const AGENCY = {
   PopsBbqTruck: NONCES.PopsBbqTruck,
-  PopsBbq_BendTruck: `${NONCES.PopsBbqTruck}${keyDelimiter}${NONCES.BendTruck}`,
+  PopsBbq_BendTruck: `${NONCES.PopsBbqTruck}${app.keyDelimiter}${NONCES.BendTruck}`,
   FoodRepublic: NONCES.FoodRepublic,
-  FoodRepublic_SuntecCity: `${NONCES.FoodRepublic}${keyDelimiter}${NONCES.SuntecCity}`,
+  FoodRepublic_SuntecCity: `${NONCES.FoodRepublic}${app.keyDelimiter}${NONCES.SuntecCity}`,
 };
 
 const connection = {
@@ -125,7 +124,7 @@ if (firstTest) {
   // TODO setup your own entity enum
   connection.nonce = AGENCY.FoodRepublic;
 } else {
-  const newNonce = NONCES.SuntecCity;
+  const newNonce = NONCES.BreadTalk;
   const idx = getIndex(newNonce);
   log(`index for ${newNonce}: ${idx}`);
 
@@ -161,7 +160,7 @@ const TESTS = {
   onboardAnon: STEPS.addAnon,
 };
 
-const TEST = TESTS.onboardAnon + TESTS.getConnections;
+const TEST = TESTS.onboard + TESTS.getConnections;
 
 notice('Connecting...');
 // connect to server and to Redis
@@ -170,8 +169,15 @@ app.connectMe().then((socket) => test());
 
 const test = () => {
   notice('Testing...');
+  if (!TEST) {
+    app
+      .onTest('Testing')
+      .then((ack) => success(`Tests.js: Testing returns: ${ack}`));
+  }
+
   if (binaryHas(TEST, TESTS.onboard)) {
     log('TEST: onAddConnection()...');
+    // ensure we don't duplicate AGENCYconnections
     if (canAddConnection(connection.nonce)) {
       app
         .onAddConnection(connection)
@@ -182,7 +188,7 @@ const test = () => {
   if (binaryHas(TEST, TESTS.onboardAnon)) {
     log('TEST: onAddAnonConnection()...');
     app
-      .onAddAnonConnection(connection)
+      .onAddAnonConnection(connection.country)
       .then((newConn) => pushNewConnection(newConn))
       .catch((e) => error(jLog(e, 'Error in onAddAnonConnection() chain')));
   }
@@ -194,7 +200,7 @@ const test = () => {
 
   if (binaryHas(TEST, TESTS.addPromo)) {
     console.log('addPromo()...');
-    app.addPromo({
+    tqr.addPromo({
       name: 'Get Sauced at Pops',
       url: 'https://www.popsouthernbbq.com/menu',
     });
@@ -202,6 +208,6 @@ const test = () => {
 
   if (binaryHas(TEST, TESTS.getPromotions)) {
     console.log('calling getPromotions()...');
-    app.getPromotions();
+    tqr.getPromotions();
   }
 };

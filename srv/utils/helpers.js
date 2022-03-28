@@ -12,7 +12,34 @@ const isValidJSON = (str) => {
     return false;
   }
 };
+
+/**
+ * Flattens a (nested) Map returning a flattened array of arrays.
+ * @param {Object} map - the map function to apply to the data.
+ */
+const reduceMap = (map) =>
+  map.reduce((a, c) => {
+    a.push([c[0], c[1][1]]);
+    return a;
+  }, []);
 //#endregion
+
+/** Use this Map/Reduce everywhere
+ * It takes a map and reduces it to an array of arrays.
+ * @param map - The map to be collapsed/expanded.
+ * @param msg - The message to display in the console.
+ * @returns The mapArray.
+ */
+const showMap = (map, msg) => {
+  console.group(`app.js: Collapse/Expand for ${msg}`);
+  const mapArray = reduceMap(map);
+  log(msg);
+  table(mapArray);
+  console.groupEnd();
+  return mapArray;
+};
+
+//#endregion Helpers
 const binaryHas = (score, val) => (score & val) === val;
 
 function error(e) {
@@ -110,4 +137,5 @@ module.exports = {
   url,
   reducePairsToObject,
   table,
+  showMap,
 };

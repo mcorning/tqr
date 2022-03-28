@@ -45,10 +45,11 @@ const forPromo = (promos) => {
  * @param country - The country code of the country the user is connecting from.
  * @param nonce - A unique identifier for the connection.
  */
-const addConnection = (country, nonce) =>
-  redis
-    .xadd(`${country}:connections`, '*', 'nonce', nonce)
-    .catch((e) => error(e));
+const addConnection = (country, nonce) => {
+  const args = [`${country}:connections`, '*', 'nonce', nonce];
+  console.log('addConnection(). args', args);
+  return redis.xadd(args).catch((e) => error(e));
+};
 
 const addOutlet = (nonce, id) =>
   redis

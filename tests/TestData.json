@@ -36,6 +36,31 @@
             "country": "sg",
             "userID": "1648243119591-0",
             "socketID": "XPJeXtyme5PdMdfpAAAJ"
+        },
+        {
+            "country": "sg",
+            "userID": "1648280027629-0",
+            "socketID": "8_EHY7Dxp3QQmg08AAAM"
+        },
+        {
+            "country": "sg",
+            "userID": "1648280309390-0",
+            "socketID": "K8ch7o9klCmr89xEAAAO"
+        },
+        {
+            "country": "sg",
+            "userID": "1648280497810-0",
+            "socketID": "7UjU51krvAOhHfZuAAAQ"
+        },
+        {
+            "command": {
+                "name": "xadd",
+                "args": [
+                    "tqr:[object Object]:connections",
+                    "*",
+                    "nonce"
+                ]
+            }
         }
     ]
 }

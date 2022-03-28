@@ -28,11 +28,9 @@ const {
   getSponsors,
   killSwitch,
   redis,
-} = require('./redis/tqr');
+} = require('./tqr');
 
-const { entryFromStream } = require('./utils/utils');
 const { error, success, jLog, log, notice } = require('./utils/helpers');
-const { debug } = require('console');
 
 /* This is the express server that is listening on port 3333. */
 const server = express()
@@ -49,32 +47,27 @@ const io = socketIO(server);
 //#endregion Setup
 
 //#region Helpers
-const safeAck = (ack, msg) => {
-  if (ack) {
-    ack(msg);
-  }
-};
 
 /**
  * Create a new user ID and add it to the Redis database.
+ * @param { Array } args - the Connection data for Redis Stream
  * @param {Object} socket - the socket that is connecting to the server
- * @param { Object } connection - the Connection data for Redis Stream
- * @param { string } connection.country - country where entity exists
- * @param { string } connection.nonce - key value for Redis Stream
- * @param { string } connection.lastDeliveredId - ID used by Redis to query Stream
- * @returns {Promise} by emitting a newConnection message that now includes the stream ID for the user
+ * @returns  Promise by emitting a newConnection message that now includes the stream ID for the user
  * <br/>NOTE: the Stream ID serves as the connection ID for socket.io
- * @see addOrFinishConnection()
  */
-//
-const onAddConnection = (socket, { country, nonce, lastDeliveredId }) =>
-  addConnection(country, nonce)
+const onAddConnection = (args, socket) => {
+  // strip off any callback function to get properties for Redis
+  const props = args.slice(0, -1);
+  const [country, nonce, lastDeliveredId] = props;
+  jLog(props, 'props:');
+  return addConnection(country, nonce)
     .then((id) => joinSocketRoom(socket, country, nonce, lastDeliveredId, id))
     .catch((e) =>
-      error(`index.js: addOrFinishConnection.addConnection 
+      error(`index.js: addConnection 
     ${e.stack}
     ${e.cause}`)
     );
+};
 
 const joinSocketRoom = (socket, country, nonce, lastDeliveredId, userID) => {
   console.groupCollapsed('io.on(connection).joinSocketRoom()');
@@ -108,55 +101,21 @@ const joinSocketRoom = (socket, country, nonce, lastDeliveredId, userID) => {
  * @param socket - the socket object
  * @returns The socket.id
  */
-const addOrFinishConnection = (socket) => {
-  // auth can be a complex object modeling a Food Chain, Outlets, and Promotions
-  const { auth } = socket.handshake;
-  const { country, nonce, userID, lastDeliveredId = '$' } = auth;
-
-  // only called during onboarding...
-  if (!userID && country && nonce) {
-    onAddConnection(socket, { country, nonce, lastDeliveredId });
-    return;
-  }
-  // ...else finish connection
-  joinSocketRoom(socket, nonce, lastDeliveredId, userID);
-  socket.emit('connected', { userID: socket.userID, nonce: socket.nonce });
-};
-
-const onAddOutlet = (socket, { country, key }) => {
-  // first make a separate connection entry for outlet for its SID
-  addConnection(country, key)
-    // then add the outlet data
-    .then((id) => addOutlet(key, id))
-    .then((id) => socket.emit('newOutlet', id))
-    .catch((e) =>
-      error(`index.js: connectOutlet.addConnection 
-    ${e.stack}
-    ${e.cause}`)
-    );
-};
-
-const onAddPromo = (socket, promo) => {
-  const { key, name, promoUrl } = promo;
-  jLog(key, `index.js onOddPromo()) calling tqr.addPromo(${key})`);
-
-  const id = addPromo({ key, name, promoUrl });
-  socket.emit('newPromo', id);
-};
 
 // TODO be sure client can specify - + values
-const onGetConnections = (socket, key, sid1, sid2) => {
-  const cmd = [key, sid1, sid2];
-  jLog(cmd, 'onGetConnections().cmd:');
-  getConnections(cmd).then((conns) => {
+const onGetConnections = (args, socket) => {
+  jLog(args, 'onGetConnections().args:');
+  getConnections(args).then((conns) => {
     socket.emit('gotConnections', conns);
   });
 };
 
-const onGetPromos = (socket, key) => {
-  const promoKey = `${key}${key.endsWith(':') ? 'promotions' : ':promotions'}`;
-  console.log(promoKey);
-  getPromos(promoKey).then((promos) => socket.emit('gotPromos', promos));
+const onTest = (args) => {
+  const [msg, ack] = args;
+  console.log(msg);
+  if (ack) {
+    ack('tested');
+  }
 };
 
 const onGetCountries = getCountries().then((x) => {
@@ -171,22 +130,16 @@ const onGetCountries = getCountries().then((x) => {
 io.on('connection', (socket) => {
   notice(`About to handle on('connection') for ${socket.handshake.auth.nonce}`);
 
-  socket.on('addConnection', ({ country, nonce, lastDeliveredId }, ack) => {
-    onAddConnection(socket, { country, nonce, lastDeliveredId })
-      .then((x) => safeAck(ack, x))
-      .catch((e) => e);
+  socket.onAny((event, ...args) => {
+    jLog(args, event);
+
+    const methods = {
+      addConnection: onAddConnection,
+      getConnections: onGetConnections,
+      test: onTest,
+    };
+
+    methods[event](args, socket);
   });
-
-  socket.on('getConnections', (key, sid1, sid2) =>
-    onGetConnections(socket, key, sid1, sid2)
-  );
-
-  socket.on('test', (msg, ack) => {
-    console.log(msg);
-    if (ack) {
-      ack('tested');
-    }
-  });
-
   //#endregion
 });
