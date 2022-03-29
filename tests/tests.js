@@ -35,6 +35,7 @@
 //#region Setup
 const app = require('../src/app');
 const tqr = require('../src/tqr');
+
 const {
   binaryHas,
   error,
@@ -61,11 +62,12 @@ const { Config } = require('node-json-db/dist/lib/JsonDBConfig');
 // or if you start the string with '/' the file will be on the PC's root dir
 const db = new JsonDB(new Config('tests/TestData', true, true, '/'));
 
-const testData = db.getData('/');
-const firstTest = isEmpty(testData);
+const firstTest = !db.exists('/connections');
+const testData = firstTest ? '' : db.getData('/');
 jLog(testData, `${firstTest ? 'Adding first test' : 'TestData.json :>>'}`);
 log();
 
+// called from below
 const pushNewConnection = (conn) => {
   jLog(conn, 'conn :>>');
   db.push('/connections[]', conn, true);
@@ -160,12 +162,17 @@ const TESTS = {
   onboardAnon: STEPS.addAnon,
 };
 
-const TEST = TESTS.onboard + TESTS.getConnections;
+const TEST = firstTest ? TESTS.onboard : TESTS.getConnections;
 
 notice('Connecting...');
 // connect to server and to Redis
 // then run tests
-app.connectMe().then((socket) => test());
+app
+  .connectMe()
+  .then((socket) => tqr.connectMe())
+  .then((socket) => {
+    test();
+  });
 
 const test = () => {
   notice('Testing...');
@@ -178,7 +185,7 @@ const test = () => {
   if (binaryHas(TEST, TESTS.onboard)) {
     log('TEST: onAddConnection()...');
     // ensure we don't duplicate AGENCYconnections
-    if (canAddConnection(connection.nonce)) {
+    if (firstTest || canAddConnection(connection.nonce)) {
       app
         .onAddConnection(connection)
         .then((newConn) => pushNewConnection(newConn))
@@ -200,7 +207,8 @@ const test = () => {
 
   if (binaryHas(TEST, TESTS.addPromo)) {
     console.log('addPromo()...');
-    tqr.addPromo({
+    const key = connection;
+    tqr.addPromo(key, {
       name: 'Get Sauced at Pops',
       url: 'https://www.popsouthernbbq.com/menu',
     });

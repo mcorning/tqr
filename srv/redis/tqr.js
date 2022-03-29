@@ -40,28 +40,6 @@ const forPromo = (promos) => {
 //#endregion Helpers
 
 //#region API
-/**
- * `Add a connection to the stream for the given country.`
- * @param country - The country code of the country the user is connecting from.
- * @param nonce - A unique identifier for the connection.
- */
-const addConnection = (country, nonce) => {
-  const args = [`${country}:connections`, '*', 'nonce', nonce];
-  console.log('addConnection(). args', args);
-  return redis.xadd(args).catch((e) => error(e));
-};
-
-const addOutlet = (nonce, id) =>
-  redis
-    .xadd(`${nonce}`, '*', 'connectionID', id)
-    .catch((e) => console.log(err(e)));
-
-// xrange us 1642558471131-0 1642558471131-0
-const getConnections = (cmd) =>
-  // redis returns a Promise<Map>}
-  redis.xrange(cmd).catch((e) => {
-    console.log(e, e.cause);
-  });
 
 // > xadd tqr:us1642558736304-0:promos * biz "Fika" promoText 'Welcome back Renee'
 const addPromo = ({ key, name, promoUrl }) =>
@@ -155,13 +133,6 @@ const deleteStream = (key, ids) => redis.xdel(key, ids);
 //#endregion DELETE
 
 //#region READ
-
-const getCountries = () =>
-  redis
-    .scan('0', 'MATCH', 'tqr:*')
-    .then((countries) => countries.filter((v, i) => i > 0))
-    .then((countryIDs) => countryIDs.map((v) => v.map((c) => c.slice(4, 6))))
-    .catch((e) => console.error('e :>> ', e));
 
 // xrange us 1642558471131-0 1642558471131-0
 const getSponsor = (country, ssid) => {
@@ -272,19 +243,17 @@ function getOutletsOk(key, sid1, sid2) {
 //#endregion Tests
 
 module.exports = {
-  getConnections,
-  addConnection,
-  addOutlet,
   addPromo,
   getPromos,
 
   addReward,
-  addSponsor,
-  deleteStream,
-  getCountries,
-  getSponsor,
   getRewards,
+
+  addSponsor,
+  getSponsor,
   getSponsors,
+
+  deleteStream,
   killSwitch,
   redis,
 };

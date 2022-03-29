@@ -3,7 +3,7 @@ console.clear();
 //#region Setup
 // @ts-ignore
 require('clarify');
-
+const ae = require('./redis/ae');
 const path = require('path');
 const express = require('express');
 // @ts-ignore
@@ -14,16 +14,12 @@ const PORT = process.env.PORT || 3333;
 const dirPath = path.join(__dirname, '../dist');
 
 const {
-  addConnection,
-  addOutlet,
-  getConnections,
-  addPromo,
-  getPromos,
+  onAddPromo,
+  onGetPromos,
 
   addSponsor,
   addReward,
   deleteStream,
-  getCountries,
   getRewards,
   getSponsors,
   killSwitch,
@@ -47,7 +43,11 @@ const io = socketIO(server);
 //#endregion Setup
 
 //#region Helpers
-
+const safeAck = (ack, data) => {
+  if (ack) {
+    ack(data);
+  }
+};
 /**
  * Create a new user ID and add it to the Redis database.
  * @param { Array } args - the Connection data for Redis Stream
@@ -58,15 +58,13 @@ const io = socketIO(server);
 const onAddConnection = (args, socket) => {
   // strip off any callback function to get properties for Redis
   const props = args.slice(0, -1);
+  const ack = args.at(-1);
   const [country, nonce, lastDeliveredId] = props;
   jLog(props, 'props:');
-  return addConnection(country, nonce)
+
+  ae.addConnection(country, nonce)
     .then((id) => joinSocketRoom(socket, country, nonce, lastDeliveredId, id))
-    .catch((e) =>
-      error(`index.js: addConnection 
-    ${e.stack}
-    ${e.cause}`)
-    );
+    .then((conn) => safeAck(ack, conn));
 };
 
 const joinSocketRoom = (socket, country, nonce, lastDeliveredId, userID) => {
@@ -105,7 +103,7 @@ const joinSocketRoom = (socket, country, nonce, lastDeliveredId, userID) => {
 // TODO be sure client can specify - + values
 const onGetConnections = (args, socket) => {
   jLog(args, 'onGetConnections().args:');
-  getConnections(args).then((conns) => {
+  ae.getConnections(args).then((conns) => {
     socket.emit('gotConnections', conns);
   });
 };
@@ -118,7 +116,7 @@ const onTest = (args) => {
   }
 };
 
-const onGetCountries = getCountries().then((x) => {
+const onGetCountries = ae.getCountries().then((x) => {
   console.log(x);
   return x;
 });
@@ -137,6 +135,7 @@ io.on('connection', (socket) => {
       addConnection: onAddConnection,
       getConnections: onGetConnections,
       test: onTest,
+      addPromo: onAddPromo,
     };
 
     methods[event](args, socket);

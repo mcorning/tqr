@@ -1,17 +1,19 @@
 const io = require('socket.io-client');
+const socket = io.connect('http://localhost:3333', { autoConnect: false });
+
 const {
-  binaryHas,
   error,
   log,
   jLog,
   notice,
-  reducePairsToObject,
   success,
   table,
   clc,
 } = require('../srv/utils/helpers');
 
 const keyDelimiter = '@';
+
+const connectMe = () => Promise.resolve(socket.connect());
 
 // "promotions": [
 //     {
@@ -33,27 +35,34 @@ const getPromo = (connection, promo) => {
   return thisPromos;
 };
 
+// const promise = (socketEvent = new Promise(
+//   (resolve) => (socketEvent) => resolve(newConn)
+// ));
+
 const getPromotions = (connection) => {
   const key = `${connection.country}:${connection.nonce}`;
+  // TODO convert to Promise
   socket.emit('getPromos', key);
 };
 
-const earnReward = () => {
-  notice('Earn a reward');
-};
-const grantReward = () => {
-  notice('Grant a reward');
-};
-const getReward = () => {
-  notice('Get a reward');
-};
+// const earnReward = () => {
+//   notice('Earn a reward');
+// };
+// const grantReward = () => {
+//   notice('Grant a reward');
+// };
+// const getReward = () => {
+//   notice('Get a reward');
+// };
 
-const addPromo = (promo) => socket.emit('addPromo', getPromo(promo));
+const addPromo = (connection, promo) =>
+  socket.emit('addPromo', connection, promo);
+
+module.exports = { addPromo, getPromotions };
 
 module.exports = {
-  getPromotions,
+  connectMe,
   addPromo,
-  earnReward,
-  grantReward,
-  getReward,
+  getPromo,
+  getPromotions,
 };

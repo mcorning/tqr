@@ -1,6 +1,6 @@
 {
   "name": "tqr",
-  "version": "0.03.2812",
+  "version": "0.03.2819",
   "description": "This is client-side code for Anonymous Engagement that provides the foundation for projects like Anonymous Contact Tracing and Than Q Reward system.",
   "scripts": {
     "start": "node app"

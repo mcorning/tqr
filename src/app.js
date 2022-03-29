@@ -37,6 +37,12 @@ const onAddAnonConnection = (country) =>
       resolve(newConn)
     )
   );
+
+const getConnections = (country, sid1 = '-', sid2 = '+') => {
+  const key = `${country}:connections`;
+  socket.emit('getConnections', key, sid1, sid2);
+};
+
 const onTest = (msg) =>
   new Promise((resolve) =>
     socket.emit('test', msg, (ack) => {
@@ -46,11 +52,6 @@ const onTest = (msg) =>
 
 const disconnected = () => {
   notice('Disconnected', clc.yellow);
-};
-
-const getConnections = (country, sid1 = '-', sid2 = '+') => {
-  const key = `${country}:connections`;
-  socket.emit('getConnections', key, sid1, sid2);
 };
 
 //#region Socket handlers
@@ -63,10 +64,6 @@ socket.on('connected', ({ userID, nonce }) => {
 socket.on('disconnect', disconnected);
 
 socket.on('newOutlet', (newOutlet) => success(`newOutlet: ${newOutlet}`));
-
-socket.on('newPromo', (newPromo) => success(`newPromo: ${newPromo}`));
-
-socket.on('gotPromos', (promos) => showMap(promos, 'promos :>>'));
 
 socket.on('gotConnections', (map) => showMap(map, 'connections :>>'));
 
