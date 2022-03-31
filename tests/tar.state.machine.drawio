@@ -1,0 +1,122 @@
+<mxfile host="65bd71144e">
+    <diagram id="xJRZdluJ_kgnvHwJgc0F" name="Inital Code Path">
+        <mxGraphModel dx="904" dy="388" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="6" value="fecth from testData" style="edgeStyle=none;html=1;" parent="1" source="2" target="5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="empty&lt;br&gt;cacheMock" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="100" y="80" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="&lt;span style=&quot;color: rgb(240 , 240 , 240) ; font-family: &amp;#34;helvetica&amp;#34; ; font-size: 12px ; font-style: normal ; font-weight: 400 ; letter-spacing: normal ; text-align: center ; text-indent: 0px ; text-transform: none ; word-spacing: 0px ; background-color: rgb(42 , 42 , 42) ; display: inline ; float: none&quot;&gt;cacheMock/connections/&lt;br&gt;&lt;/span&gt;FoodRepublic/userID&lt;br&gt;" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="99" y="610" width="81" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="get first element of /tests/" style="edgeStyle=none;html=1;" parent="1" source="5" target="14" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="&#10;&#10;&lt;span style=&quot;color: rgb(240, 240, 240); font-family: helvetica; font-size: 12px; font-style: normal; font-weight: 400; letter-spacing: normal; text-align: center; text-indent: 0px; text-transform: none; word-spacing: 0px; background-color: rgb(42, 42, 42); display: inline; float: none;&quot;&gt;testData/tests&lt;/span&gt;&#10;&#10;" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+                    <mxGeometry x="345" y="80" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="select a connection" style="edgeStyle=none;html=1;" parent="1" source="7" target="10" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="cacheMock/connections" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="100" y="340" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="addConnection" style="edgeStyle=none;html=1;" parent="1" source="10" target="12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="connection" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="345" y="420" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="update userID" style="edgeStyle=none;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="12" target="4" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="tqr:sg:FoodRepublic" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#a20025;fontColor=#ffffff;strokeColor=#6F0000;" parent="1" vertex="1">
+                    <mxGeometry x="345" y="610" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="append connetion to connections[]" style="edgeStyle=none;html=1;entryX=0.913;entryY=0.275;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="14" target="7" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="&lt;span style=&quot;color: rgb(240 , 240 , 240) ; font-family: &amp;#34;helvetica&amp;#34; ; font-size: 12px ; font-style: normal ; font-weight: 400 ; letter-spacing: normal ; text-align: center ; text-indent: 0px ; text-transform: none ; word-spacing: 0px ; background-color: rgb(42 , 42 , 42) ; display: inline ; float: none&quot;&gt;testData/tests/nonce==&lt;br&gt;'FoodRepublic'&lt;/span&gt;" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
+                    <mxGeometry x="345" y="250" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" value="&#10;&#10;&lt;span style=&quot;color: rgb(255, 255, 255); font-family: helvetica; font-size: 12px; font-style: normal; font-weight: 400; letter-spacing: normal; text-align: center; text-indent: 0px; text-transform: none; word-spacing: 0px; background-color: rgb(42, 42, 42); display: inline; float: none;&quot;&gt;Redis Streams&lt;/span&gt;&#10;&#10;" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;position2=0.25;fillColor=#a20025;fontColor=#ffffff;strokeColor=#6F0000;" parent="1" vertex="1">
+                    <mxGeometry x="420" y="570" width="90" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="&lt;font style=&quot;font-size: 17px&quot;&gt;Initial Code Path&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="10" width="140" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" value="&lt;font style=&quot;font-size: 13px&quot;&gt;tests/testData.json&lt;/font&gt;" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;fontSize=17;position2=0.33;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+                    <mxGeometry x="390" y="20" width="120" height="80" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="S7iAyBA7A5RNzuGyHK8o" name="Manage Promos">
+        <mxGraphModel dx="852" dy="1061" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="lcYbLSc-Ei5Uvx5k7iwY-0"/>
+                <mxCell id="lcYbLSc-Ei5Uvx5k7iwY-1" parent="lcYbLSc-Ei5Uvx5k7iwY-0"/>
+                <mxCell id="UnKUSW5S5kvEuHeF55nt-0" value="get promotions object from /tests//nonce=='FopodRepublic'" style="edgeStyle=none;html=1;" edge="1" parent="lcYbLSc-Ei5Uvx5k7iwY-1" source="UnKUSW5S5kvEuHeF55nt-1" target="UnKUSW5S5kvEuHeF55nt-6">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="6QcjeJ9X0yOx62owkcTB-7" value="getPromotions(connection)" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontSize=13;" edge="1" parent="lcYbLSc-Ei5Uvx5k7iwY-1" source="UnKUSW5S5kvEuHeF55nt-1" target="UnKUSW5S5kvEuHeF55nt-4">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="620" y="120"/>
+                            <mxPoint x="620" y="470"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="UnKUSW5S5kvEuHeF55nt-1" value="&#10;&#10;&lt;span style=&quot;color: rgb(240, 240, 240); font-family: helvetica; font-size: 12px; font-style: normal; font-weight: 400; letter-spacing: normal; text-align: center; text-indent: 0px; text-transform: none; word-spacing: 0px; background-color: rgb(42, 42, 42); display: inline; float: none;&quot;&gt;testData/tests&lt;/span&gt;&#10;&#10;" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="lcYbLSc-Ei5Uvx5k7iwY-1">
+                    <mxGeometry x="345" y="80" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="UnKUSW5S5kvEuHeF55nt-2" value="addPromo(connection, promo)" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="lcYbLSc-Ei5Uvx5k7iwY-1" source="UnKUSW5S5kvEuHeF55nt-6" target="UnKUSW5S5kvEuHeF55nt-4">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="118.7185659446368" y="390.04353778263135" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="6QcjeJ9X0yOx62owkcTB-1" value="return all promotions" style="edgeStyle=none;html=1;fontSize=13;" edge="1" parent="lcYbLSc-Ei5Uvx5k7iwY-1" source="UnKUSW5S5kvEuHeF55nt-4" target="6QcjeJ9X0yOx62owkcTB-0">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="UnKUSW5S5kvEuHeF55nt-4" value="&lt;br&gt;&lt;br&gt;tqr:sg:FoodRepublic:promotions" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#a20025;fontColor=#ffffff;strokeColor=#6F0000;" vertex="1" parent="lcYbLSc-Ei5Uvx5k7iwY-1">
+                    <mxGeometry x="345" y="430" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="UnKUSW5S5kvEuHeF55nt-6" value="&lt;span style=&quot;color: rgb(240 , 240 , 240) ; font-family: &amp;#34;helvetica&amp;#34; ; font-size: 12px ; font-style: normal ; font-weight: 400 ; letter-spacing: normal ; text-align: center ; text-indent: 0px ; text-transform: none ; word-spacing: 0px ; background-color: rgb(42 , 42 , 42) ; display: inline ; float: none&quot;&gt;testData/tests/nonce==&lt;br&gt;'FoodRepublic'/promotions&lt;/span&gt;" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="lcYbLSc-Ei5Uvx5k7iwY-1">
+                    <mxGeometry x="345" y="250" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="IwypFkzxYJLSgFQDzW1R-0" value="fecth data from &lt;br&gt;testData/tests/&lt;br&gt;nonce='FoodRepublic'" style="edgeStyle=none;html=1;" edge="1" parent="lcYbLSc-Ei5Uvx5k7iwY-1" source="IwypFkzxYJLSgFQDzW1R-1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="345" y="120" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="IwypFkzxYJLSgFQDzW1R-1" value="cacheMock/connections/&lt;br&gt;nonce=='FoodRepublic'" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="lcYbLSc-Ei5Uvx5k7iwY-1">
+                    <mxGeometry x="50" y="80" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="6QcjeJ9X0yOx62owkcTB-3" value="flatten Map" style="edgeStyle=none;html=1;fontSize=13;" edge="1" parent="lcYbLSc-Ei5Uvx5k7iwY-1" source="6QcjeJ9X0yOx62owkcTB-0" target="6QcjeJ9X0yOx62owkcTB-2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="6QcjeJ9X0yOx62owkcTB-0" value="promotions Map" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#a20025;fontColor=#ffffff;strokeColor=#6F0000;" vertex="1" parent="lcYbLSc-Ei5Uvx5k7iwY-1">
+                    <mxGeometry x="345" y="590" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="6QcjeJ9X0yOx62owkcTB-2" value="promotions listed" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" vertex="1" parent="lcYbLSc-Ei5Uvx5k7iwY-1">
+                    <mxGeometry x="60" y="590" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="6QcjeJ9X0yOx62owkcTB-4" value="UI (e.g., Vue)" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;fontSize=13;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" vertex="1" parent="lcYbLSc-Ei5Uvx5k7iwY-1">
+                    <mxGeometry x="40" y="490" width="120" height="80" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="8Gf_6hiredWkOAqFzbzo" name="Page-3">
+        <mxGraphModel dx="6390" dy="7960" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="riwzfHIX6xcC8_U548wm-0"/>
+                <mxCell id="riwzfHIX6xcC8_U548wm-1" parent="riwzfHIX6xcC8_U548wm-0"/>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

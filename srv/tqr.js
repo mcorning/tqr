@@ -10,12 +10,16 @@ const {
   killSwitch,
   redis,
 } = require('./redis/tqr');
-const { error, success, jLog, log, notice } = require('./utils/helpers');
+const { error, head, success, jLog, log, notice } = require('./utils/helpers');
 
 // methods called by index.js
 const onAddPromo = (args, socket) => {
-  const [key, name, promoUrl] = args;
-  jLog(key, `index.js onOddPromo()) calling tqr.addPromo(${key})`);
+  const { key, name, promoUrl } = head(args);
+
+  jLog(
+    args,
+    `tqr.js onOddPromo()) calling redis/tqr.js:addPromo(${key}, ${name},${promoUrl})`
+  );
 
   const id = addPromo({ key, name, promoUrl });
   socket.emit('newPromo', id);

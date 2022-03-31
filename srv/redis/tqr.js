@@ -25,25 +25,13 @@ console.log('options:>>', options);
 console.groupEnd();
 //#endregion Setup
 
-//#region Helpers
-
-const forPromo = (promos) => {
-  if (isEmpty(promos)) {
-    return 'no promos';
-  }
-  return promos.reduce((a, c) => {
-    const { name, promoUrl } = c;
-    a.push({ name, promoUrl });
-    return a;
-  }, []);
-};
-//#endregion Helpers
-
 //#region API
 
 // > xadd tqr:us1642558736304-0:promos * biz "Fika" promoText 'Welcome back Renee'
-const addPromo = ({ key, name, promoUrl }) =>
+const addPromo = ({ key, name, promoUrl }) => {
+  console.log(`XADD ${key} * name ${name} promoUrl ${promoUrl}`);
   redis.xadd(key, '*', 'name', name, 'promoUrl', promoUrl);
+};
 
 // xread tqr:us:1642558471131-0:promos 0
 const getPromos = (key) => redis.xread('STREAMS', key, '0');

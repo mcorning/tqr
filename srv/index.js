@@ -90,21 +90,19 @@ const joinSocketRoom = (socket, country, nonce, lastDeliveredId, userID) => {
   return conn;
 };
 
-/**
- * CALLED BY: io.on('connection')
- * HANDLING: socket.handshake.auth data structure
- * CALLS UPON: newConnection(socket, connection)
- *
- * When a new connection is made, we store the userID, socketID, and lastDeliveredId in Redis
- * @param socket - the socket object
- * @returns The socket.id
- */
-
 // TODO be sure client can specify - + values
-const onGetConnections = (args, socket) => {
+const onGetConnections = (args) => {
   jLog(args, 'onGetConnections().args:');
-  ae.getConnections(args).then((conns) => {
-    socket.emit('gotConnections', conns);
+  const cmd = args[0];
+  const ack = args[1];
+  console.assert(
+    typeof ack === 'function',
+    'onGetConnections(args) lacks a callback'
+  );
+  ae.getConnections(cmd).then((conns) => {
+    if (ack) {
+      ack(conns);
+    }
   });
 };
 

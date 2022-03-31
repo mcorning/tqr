@@ -38,10 +38,14 @@ const onAddAnonConnection = (country) =>
     )
   );
 
-const getConnections = (country, sid1 = '-', sid2 = '+') => {
-  const key = `${country}:connections`;
-  socket.emit('getConnections', key, sid1, sid2);
-};
+const getConnections = (country, sid1 = '-', sid2 = '+') =>
+  new Promise((resolve) =>
+    socket.emit(
+      'getConnections',
+      [`${country}:connections`, sid1, sid2],
+      (result) => resolve(result)
+    )
+  );
 
 const onTest = (msg) =>
   new Promise((resolve) =>

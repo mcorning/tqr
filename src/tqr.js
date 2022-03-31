@@ -56,7 +56,9 @@ const getPromotions = (connection) => {
 // };
 
 const addPromo = (connection, promo) =>
-  socket.emit('addPromo', connection, promo);
+  socket.emit('addPromo', getPromo(connection, promo));
+
+socket.on('newPromo', (promo) => log(promo));
 
 module.exports = { addPromo, getPromotions };
 
