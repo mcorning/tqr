@@ -42,9 +42,10 @@
 //#region Setup
 const app = require('../src/app');
 const tqr = require('../src/tqr');
+const db = require('./db.js');
 
 const {
-  binaryHas,
+  compose,
   error,
   log,
   jLog,
@@ -57,106 +58,78 @@ const {
 } = require('../srv/utils/helpers');
 //#endregion Setup
 
-// true will empty the mock as soon as it opens
-const reset = false;
-const STEPS = {
-  null: 0,
-  onAddConnection: 1,
-  getConnections: 1 << 1,
-  addPromotion: 1 << 2,
-  getPromotions: 1 << 3,
-  addAnon: 1 << 4,
+const printResults = (msg, result) => {
+  success(msg);
+  jLog(result, '', clc.green);
 };
 
-const TESTS = {
-  onboard: STEPS.onAddConnection,
-  getConnections: STEPS.getConnections,
-  addPromo: STEPS.addPromotion,
-  getPromos: STEPS.getPromotions,
-  onboardAndGetConnections: STEPS.onAddConnection + STEPS.getConnections,
-  onboardAnon: STEPS.addAnon,
+const testAddConnctions = (connections) => {
+  log(`Testing onAddConnection with ${connections.length} connections`);
+  connections.forEach((connection) => {
+    jLog(connection, 'connection');
+    app
+      .onAddConnection(connection)
+      .then((result) => printResults(`Test Passed: new connection`, result))
+      .catch((e) => error(jLog(e, 'Error in onAddConnection() chain')));
+  });
+  // interesting...adding connections is orthogonal to add promos
+  // so to enable the next step in tests, we can pass on the connectionsWithPromos
+  // while we are adding connections
+  return db.getConnectionsWithPromos();
 };
 
-// TEST=onboard && firstTest will copy the first test in TEST_DATA to MOCK
-// TEST=onboard && firstTest=false will copy the next test in TEST_DATA
-const TEST = TESTS.getConnections;
-
-//#region Database
-// very cool json MOCK: https://belphemur.github.io/node-json-MOCK/#appending-in-array
-
-//#region Open data files
-// @ts-ignore
-const { JsonDB } = require('node-json-db');
-// @ts-ignore
-const { Config } = require('node-json-db/dist/lib/JsonDBConfig');
-// when configuring the MOCK, be sure to start with the current dir name,
-// otherwise, the data file goes to the parent folder
-// or if you start the string with '/' the file will be on the PC's root dir
-const MOCK = new JsonDB(new Config('tests/cacheMock', true, true, '/'));
-
-// TESTER: set reset above to true until first test passes
-if (reset) {
-  warn('Resetting MOCK data');
-  MOCK.delete('connections');
-}
-
-const TEST_DATA = new JsonDB(new Config('tests/testData', true, true, '/'));
-//#endregion Open data files
-
-//#region Helper methods
-const mockNewConnection = (conn) => {
-  jLog(conn, 'conn :>>');
-  MOCK.push('/connections[]', conn, true);
-  jLog(MOCK.getData('/'), 'TestData :>>', clc.green);
-  log();
+const testAddPromotions = (connections) => {
+  log('testing onAddPromotions');
+  connections.forEach((connection) => {
+    jLog(connection, 'connection');
+    tqr
+      .onAddPromotion(connection)
+      .then((result) => printResults(`Test Passed: new promotion`, result))
+      .catch((e) => error(jLog(e, 'Error in onAddPromotions() chain')));
+  });
 };
 
-const getFirstTest = () => {
-  const conn = TEST_DATA.getData('/tests[0]');
-  mockNewConnection(conn);
-  return conn;
+const testAddAnon = () => {
+  log('testing onAddAnon');
 };
 
-const getNextTest = () => {
-  const idx = MOCK.count('/connections');
-  const onboarding = binaryHas(TEST, TESTS.onboard);
-  // firstTest must be false if we are in this function
-  const conn = onboarding
-    ? TEST_DATA.getData(`/tests[${idx}]`)
-    : MOCK.getData('/connections[-1]');
-  if (onboarding) {
-    mockNewConnection(conn);
-  }
-  return conn;
+const testGetCountries = () => {
+  log('testing onGetCountries()');
+  app
+    .onGetCountries()
+    // TODO better to use Promise.reject() for failed tests
+    .then((countries) => {
+      printResults(`onGetCountries succeeded: ${countries}`);
+      return countries;
+    });
 };
 
-const canAddConnection = (checkNonce) => {
-  const okToAdd = isEmpty(find(checkNonce));
-  if (!okToAdd) {
-    warn(
-      `You cannot add a connection to ${checkNonce} because that already exists in Redis`
+const testGetConnections = () => {
+  log('testing onGetConnections');
+  app.onGetCountries().then((countries) =>
+    countries.forEach((country) => {
+      app
+        .onGetConnections(country)
+        // TODO better to use Promise.reject() for failed tests
+        .then((conns) => {
+          jLog(conns, `getConnections succeeded: `, clc.green);
+        });
+    })
+  );
+};
+
+const testGetPromotions = () => {
+  log('testing onGetPromotions');
+  tqr
+    .onGetPromotions()
+    .then((result) =>
+      log(
+        `Test getPromotions return this many results: ${
+          result ? result.length : 0
+        }`
+      )
     );
-  }
-  return okToAdd;
 };
-
-const find = (value, prop = 'userID') =>
-  TEST_DATA.find('/', (v) => v[prop] === value);
-
-const getTestResult = (test, result) =>
-  isEmpty(result)
-    ? error(`Test Failed for ${test}`)
-    : success(`Test Passed for ${test}`);
-//#endregion Helper methods
-
-//#region Setup Mock
-const firstTest = !MOCK.exists('/connections');
-const connection = firstTest ? getFirstTest() : getNextTest();
-jLog(connection, `${firstTest ? 'Adding first test' : 'TestData.json :>>'}`);
-log();
-//#endregion
-
-//#endregion Database
 
 notice('Connecting...');
 // connect to server and to Redis
@@ -164,62 +137,18 @@ notice('Connecting...');
 app
   .connectMe()
   .then(() => tqr.connectMe())
-  .then(() => test());
+  .then(() => notice('Connected'))
+  // .then(() => testAdds());
+  .then(() => testGets());
 
-const test = () => {
-  try {
-    notice('Testing...');
-    if (!TEST) {
-      app
-        .onTest('Testing')
-        .then((ack) => success(`Tests.js: Testing returns: ${ack}`));
-    }
-
-    if (binaryHas(TEST, TESTS.onboard)) {
-      log('TEST: onAddConnection()...');
-      // ensure we don't duplicate AGENCYconnections
-      if (firstTest || canAddConnection(connection.nonce)) {
-        app
-          .onAddConnection(connection)
-          .then((newConn) =>
-            success(jLog(newConn, 'Test Passed: new connection'))
-          )
-          .catch((e) => error(jLog(e, 'Error in onAddConnection() chain')));
-      }
-    }
-
-    if (binaryHas(TEST, TESTS.onboardAnon)) {
-      log('TEST: onAddAnonConnection()...');
-      app
-        .onAddAnonConnection(connection.country)
-        .then((newConn) => mockNewConnection(newConn))
-        .catch((e) => error(jLog(e, 'Error in onAddAnonConnection() chain')));
-    }
-
-    if (binaryHas(TEST, TESTS.getConnections)) {
-      console.log('getConnections()...');
-      app
-        .getConnections(connection.country)
-        // TODO better to use Promise.reject() for failed tests
-        .then((x) => getTestResult('getConnections', x));
-    }
-
-    if (binaryHas(TEST, TESTS.addPromo)) {
-      console.log('addPromo()...');
-      const key = connection;
-      tqr.addPromo(key, {
-        name: 'Get Sauced at Pops',
-        url: 'https://www.popsouthernbbq.com/menu',
-      });
-    }
-
-    if (binaryHas(TEST, TESTS.getPromotions)) {
-      console.log('calling getPromotions()...');
-      tqr.getPromotions();
-    }
-  } catch (e) {
-    error(`Test code failed: 
-  ${e.message}
-  ${e.stack}`);
-  }
-};
+const testAdds = compose(
+  testAddAnon,
+  testAddPromotions,
+  testAddConnctions,
+  db.getConnections
+);
+const testGets = compose(
+  testGetPromotions,
+  testGetConnections,
+  testGetCountries
+);

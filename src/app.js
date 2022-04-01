@@ -20,6 +20,13 @@ const keyDelimiter = '@';
 //#endregion Setup
 
 //#region Helpers
+const promisify =
+  (func) =>
+  (...args) =>
+    new Promise((resolve, reject) =>
+      func(...args, (err, result) => (err ? reject(err) : resolve(result)))
+    );
+
 // testing and clients start processing here.
 const connectMe = () => Promise.resolve(socket.connect());
 
@@ -30,6 +37,7 @@ const onAddConnection = ({ country, nonce }) =>
       resolve(newConn)
     )
   );
+
 const onAddAnonConnection = (country) =>
   // TODO how do we handle an error in the Promise?
   new Promise((resolve) =>
@@ -38,7 +46,14 @@ const onAddAnonConnection = (country) =>
     )
   );
 
-const getConnections = (country, sid1 = '-', sid2 = '+') =>
+const onGetCountries = () =>
+  new Promise((resolve) =>
+    socket.emit('getCountries', (result) =>
+      resolve([...new Set(result.flat())])
+    )
+  );
+
+const onGetConnections = (country, sid1 = '-', sid2 = '+') =>
   new Promise((resolve) =>
     socket.emit(
       'getConnections',
@@ -57,6 +72,7 @@ const onTest = (msg) =>
 const disconnected = () => {
   notice('Disconnected', clc.yellow);
 };
+//#endregion Helpers
 
 //#region Socket handlers
 socket.on('connected', ({ userID, nonce }) => {
@@ -77,7 +93,8 @@ module.exports = {
   connectMe,
   onAddAnonConnection,
   onAddConnection,
-  getConnections,
+  onGetConnections,
+  onGetCountries,
   keyDelimiter,
   onTest,
 };

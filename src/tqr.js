@@ -35,36 +35,36 @@ const getPromo = (connection, promo) => {
   return thisPromos;
 };
 
-// const promise = (socketEvent = new Promise(
-//   (resolve) => (socketEvent) => resolve(newConn)
-// ));
+const onGetPromotions = (key) =>
+  new Promise((resolve) =>
+    socket.emit('getPromos', key, (result) => {
+      log(result);
+      resolve(result);
+    })
+  );
 
-const getPromotions = (connection) => {
-  const key = `${connection.country}:${connection.nonce}`;
-  // TODO convert to Promise
-  socket.emit('getPromos', key);
+const onAddPromotion = (promo) =>
+  new Promise((resolve) =>
+    socket.emit('addPromo', promo, (result) => {
+      log(result);
+      resolve(result);
+    })
+  );
+
+socket.on('newPromo', (promo) => success(`New Promo: ${promo}`));
+
+const earnReward = () => {
+  notice('Earn a reward');
 };
-
-// const earnReward = () => {
-//   notice('Earn a reward');
-// };
-// const grantReward = () => {
-//   notice('Grant a reward');
-// };
-// const getReward = () => {
-//   notice('Get a reward');
-// };
-
-const addPromo = (connection, promo) =>
-  socket.emit('addPromo', getPromo(connection, promo));
-
-socket.on('newPromo', (promo) => log(promo));
-
-module.exports = { addPromo, getPromotions };
+const grantReward = () => {
+  notice('Grant a reward');
+};
+const getReward = () => {
+  notice('Get a reward');
+};
 
 module.exports = {
   connectMe,
-  addPromo,
-  getPromo,
-  getPromotions,
+  onAddPromotion,
+  onGetPromotions,
 };

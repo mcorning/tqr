@@ -3,49 +3,44 @@
         {
             "country": "sg",
             "nonce": "FoodRepublic",
-            "userID": "1647651211684-0",
             "promotions": [
                 {
-                    "name": "Deliveroo",
-                    "url": "https://foodrepublic.com.sg/2021/05/24/delivery-deliveroo-promo/"
+                    "promoName": "Deliveroo",
+                    "promoUrl": "https://foodrepublic.com.sg/2021/05/24/delivery-deliveroo-promo/"
                 },
                 {
-                    "name": "NETS Eat & Win",
-                    "url": "https://foodrepublic.com.sg/2021/08/30/frxnetsluckydrawcampaign/"
+                    "promoName": "NETS Eat & Win",
+                    "promoUrl": "https://foodrepublic.com.sg/2021/08/30/frxnetsluckydrawcampaign/"
                 }
             ]
         },
         {
             "country": "sg",
-            "nonce": "FoodRepublic@BreadTalk",
-            "userID": "1647651211769-0"
+            "nonce": "FoodRepublic@BreadTalk"
         },
         {
             "country": "sg",
             "nonce": "FoodRepublic@SuntecCity",
-            "userID": "1647651211773-0",
             "promotions": [
                 {
-                    "name": "$3 Take and Go",
-                    "url": "https://foodrepublic.com.sg/2019/12/03/suntec-city-3-take-and-go/"
+                    "promoName": "$3 Take and Go",
+                    "promoUrl": "https://foodrepublic.com.sg/2019/12/03/suntec-city-3-take-and-go/"
                 }
             ]
         },
         {
             "country": "us",
             "nonce": "PopsBBQTruck",
-            "userID": "1648574962223-0",
             "promotions": [
                 {
-                    "name": "Get Sauced at Pop's",
-                    "url": "https://www.popsouthernbbq.com/menu"
+                    "promoName": "Get Sauced at Pop's",
+                    "promoUrl": "https://www.popsouthernbbq.com/menu"
                 }
             ]
         },
         {
             "country": "us",
-            "nonce": "PopsBBQTruck@TheBarn",
-            "userID": "1648574962223-0"
+            "nonce": "PopsBBQTruck@TheBarn"
         }
     ]
 }

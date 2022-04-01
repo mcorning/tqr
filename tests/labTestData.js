@@ -16,16 +16,22 @@ console.groupEnd();
 const find = (value, prop = 'userID') =>
   db.find('/tests', (v) => v[prop] === value);
 
-const foundUserID = find('1648574962223-0');
-const foundNonce = find('FoodRepublic@SuntecCity', 'nonce');
-const idx = 0;
+const useMe = false;
+if (useMe) {
+  const foundUserID = find('1648574962223-0');
+  const foundNonce = find('FoodRepublic@SuntecCity', 'nonce');
+  const idx = 0;
 
-console.log('Found userID:\n', JSON.stringify(foundUserID, null, 2));
-console.log(' ');
-console.log('Found nonce:\n', JSON.stringify(foundNonce, null, 3));
+  console.log('Found userID:\n', JSON.stringify(foundUserID, null, 2));
+  console.log(' ');
+  console.log('Found nonce:\n', JSON.stringify(foundNonce, null, 3));
 
-const conn = db.getData(`/tests[${idx}]`);
-console.log(' ');
-console.log('Data by index:\n', JSON.stringify(conn, null, 3));
+  const conn = db.getData(`/tests[${idx}]`);
+  console.log(' ');
+  console.log('Data by index:\n', JSON.stringify(conn, null, 3));
+}
+
+const x = db.filter('/tests/', (v) => v.promotions);
+console.log(x);
 
 console.log();

@@ -85,6 +85,12 @@ function warn(msg) {
   console.warn(clc.yellow(msg));
 }
 
+const compose = (...fns) =>
+  fns.reduce(
+    (f, g) =>
+      (...args) =>
+        f(g(...args))
+  );
 /**
  * Try to construct a table with the columns of the properties of
  * `tabularData`(or use `properties`) and rows of `tabularData` and log it.
@@ -121,6 +127,7 @@ function table(data) {
 
 module.exports = {
   binaryHas,
+  compose,
   clc,
   endSuccess,
   error,

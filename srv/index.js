@@ -44,27 +44,9 @@ const io = socketIO(server);
 
 //#region Helpers
 const safeAck = (ack, data) => {
-  if (ack) {
+  if (ack && typeof ack === 'function') {
     ack(data);
   }
-};
-/**
- * Create a new user ID and add it to the Redis database.
- * @param { Array } args - the Connection data for Redis Stream
- * @param {Object} socket - the socket that is connecting to the server
- * @returns  Promise by emitting a newConnection message that now includes the stream ID for the user
- * <br/>NOTE: the Stream ID serves as the connection ID for socket.io
- */
-const onAddConnection = (args, socket) => {
-  // strip off any callback function to get properties for Redis
-  const props = args.slice(0, -1);
-  const ack = args.at(-1);
-  const [country, nonce, lastDeliveredId] = props;
-  jLog(props, 'props:');
-
-  ae.addConnection(country, nonce)
-    .then((id) => joinSocketRoom(socket, country, nonce, lastDeliveredId, id))
-    .then((conn) => safeAck(ack, conn));
 };
 
 const joinSocketRoom = (socket, country, nonce, lastDeliveredId, userID) => {
@@ -89,6 +71,27 @@ const joinSocketRoom = (socket, country, nonce, lastDeliveredId, userID) => {
 
   return conn;
 };
+//#endregion Helpers
+
+//#region Event handlers
+/**
+ * Create a new user ID and add it to the Redis database.
+ * @param { Array } args - the Connection data for Redis Stream
+ * @param {Object} socket - the socket that is connecting to the server
+ * @returns  Promise by emitting a newConnection message that now includes the stream ID for the user
+ * <br/>NOTE: the Stream ID serves as the connection ID for socket.io
+ */
+const onAddConnection = (args, socket) => {
+  // strip off any callback function to get properties for Redis
+  const props = args.slice(0, -1);
+  const ack = args.at(-1);
+  const [country, nonce, lastDeliveredId] = props;
+  jLog(props, 'props:');
+
+  ae.addConnection(country, nonce)
+    .then((id) => joinSocketRoom(socket, country, nonce, lastDeliveredId, id))
+    .then((conn) => safeAck(ack, conn));
+};
 
 // TODO be sure client can specify - + values
 const onGetConnections = (args) => {
@@ -99,30 +102,15 @@ const onGetConnections = (args) => {
     typeof ack === 'function',
     'onGetConnections(args) lacks a callback'
   );
-  ae.getConnections(cmd).then((conns) => {
-    if (ack) {
-      ack(conns);
-    }
-  });
+  ae.getConnections(cmd).then((conns) => safeAck(ack, conns));
 };
 
-const onTest = (args) => {
-  const [msg, ack] = args;
-  console.log(msg);
-  if (ack) {
-    ack('tested');
-  }
+const onGetCountries = (args) => {
+  const ack = args[0];
+  ae.getCountries().then((countries) => safeAck(ack, countries));
 };
+//#endregion Event handlers
 
-const onGetCountries = ae.getCountries().then((x) => {
-  console.log(x);
-  return x;
-});
-//#endregion Helpers
-
-/** io.on('connection')
- * A socket auth may have a userID. If not, we need to add a connection to the Redis Stream.
- */
 io.on('connection', (socket) => {
   notice(`About to handle on('connection') for ${socket.handshake.auth.nonce}`);
 
@@ -130,13 +118,15 @@ io.on('connection', (socket) => {
     jLog(args, event);
 
     const methods = {
+      //ae functions
       addConnection: onAddConnection,
+      getCountries: onGetCountries,
       getConnections: onGetConnections,
-      test: onTest,
+      //tqr functions
       addPromo: onAddPromo,
+      getPromos: onGetPromos,
     };
 
-    methods[event](args, socket);
+    methods[event](args, socket, io);
   });
-  //#endregion
 });

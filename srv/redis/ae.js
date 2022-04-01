@@ -16,6 +16,9 @@ if (process.env.NODE_ENV === 'production') {
     port: lctJsonOptions.redisPort,
     password: lctJsonOptions.redisPassword,
     showFriendlyErrorStack: true,
+    // TODO FIX: the keyPrefix(es) should be in the appropriate client code
+    // e.g., 'tqr' should not be in ae.js
+    // it should be in tqr.js
     keyPrefix: 'tqr:',
   };
 }
