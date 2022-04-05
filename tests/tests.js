@@ -68,7 +68,7 @@ const printResults = (msg, result) => {
 const testAddConnctions = (connections) => {
   log(`Testing onAddConnection with ${connections.length} connections`);
   connections.forEach((connection) => {
-    jLog(connection, 'connection');
+    printResults('onAddConnection results :>>', connection);
     app
       .onAddConnection(connection)
       .then((result) => printResults(`\tTest onAddConnection() PASSED`, result))
@@ -83,7 +83,7 @@ const testAddConnctions = (connections) => {
 const testAddPromotions = (connections) => {
   log('testing onAddPromotions');
   connections.forEach((connection) => {
-    jLog(connection, 'connection');
+    jLog(connection, 'connection', clc.green);
     tqr
       .onAddPromotion(connection)
       .then((result) => printResults(`\tTest onAddPromotion() PASSED`, result))
@@ -92,7 +92,12 @@ const testAddPromotions = (connections) => {
 };
 
 const testAddAnon = () => {
-  log('testing onAddAnon');
+  log('testing testAddAnon');
+  app
+    .onAddAnonConnection('us')
+    .then((result) =>
+      printResults(`\tTest onAdd[anon]Connection() PASSED`, result)
+    );
 };
 
 const testGetCountries = () => {
@@ -146,7 +151,7 @@ notice('Connecting...');
 // then run tests
 app
   .connectMe()
-  .then(() => tqr.connectMe())
+  .then(() => tqr.connectMe()) // give tqr a socket of its own
   .then(() => notice('Connected'))
   .then(() => {
     if (reset) {

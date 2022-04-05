@@ -4,6 +4,8 @@ console.clear();
 // @ts-ignore
 require('clarify');
 const ae = require('./redis/ae');
+const tqr = require('./tqr');
+
 const path = require('path');
 const express = require('express');
 // @ts-ignore
@@ -12,19 +14,6 @@ const serveStatic = require('serve-static');
 
 const PORT = process.env.PORT || 3333;
 const dirPath = path.join(__dirname, '../dist');
-
-const {
-  onAddPromo,
-  onGetPromos,
-
-  addSponsor,
-  addReward,
-  deleteStream,
-  getRewards,
-  getSponsors,
-  killSwitch,
-  redis,
-} = require('./tqr');
 
 const {
   error,
@@ -120,6 +109,9 @@ const onGetCountries = (args) => {
     .then((countries) => safeAck(ack, countries));
 };
 //#endregion Event handlers
+const onTest = (args) => {
+  console.log(args);
+};
 
 io.on('connection', (socket) => {
   notice(`About to handle on('connection') for socket ID: ${socket.id}`);
@@ -134,8 +126,10 @@ io.on('connection', (socket) => {
       getCountries: onGetCountries,
       getConnections: onGetConnections,
       //tqr functions
-      addPromo: onAddPromo,
-      getPromos: onGetPromos,
+      addPromo: tqr.onAddPromo,
+      getPromos: tqr.onGetPromos,
+
+      test: onTest,
     };
 
     methods[event](args, socket, io);

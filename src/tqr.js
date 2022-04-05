@@ -50,7 +50,7 @@ const onAddPromotion = (promo) =>
     })
   );
 
-socket.on('newPromo', (promo) => success(`New Promo: ${promo}`));
+socket.on('newPromo', (promo) => success(`New Promo just arrived: ${promo}`));
 
 const earnReward = () => {
   notice('Earn a reward');

@@ -20,12 +20,6 @@ const keyDelimiter = '@';
 //#endregion Setup
 
 //#region Helpers
-const promisify =
-  (func) =>
-  (...args) =>
-    new Promise((resolve, reject) =>
-      func(...args, (err, result) => (err ? reject(err) : resolve(result)))
-    );
 
 // testing and clients start processing here.
 const connectMe = () => Promise.resolve(socket.connect());
@@ -64,12 +58,10 @@ const onGetConnections = (country, sid1 = '-', sid2 = '+') =>
     )
   );
 
-const onTest = (msg) =>
-  new Promise((resolve) =>
-    socket.emit('test', msg, (ack) => {
-      resolve(ack);
-    })
-  );
+const onTest = (event, data) => {
+  log(event);
+  jLog(data);
+};
 
 const disconnected = () => {
   notice('Disconnected', clc.yellow);

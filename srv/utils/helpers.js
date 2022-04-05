@@ -4,6 +4,13 @@ const clc = require('cli-color');
 const url = clc.black.bold.bgCyanBright;
 
 //#region Internals
+const promisify =
+  (func) =>
+  (...args) =>
+    new Promise((resolve, reject) =>
+      func(...args, (err, result) => (err ? reject(err) : resolve(result)))
+    );
+
 const isValidJSON = (str) => {
   try {
     JSON.parse(str);
@@ -79,7 +86,8 @@ function jLog(json, msg = 'json >>:', color = clc.white) {
   if (isEmpty(json)) {
     return '';
   }
-  const data = typeof json[0] === 'function' ? `` : json;
+  const data =
+    typeof json[0] === 'function' ? `` : JSON.stringify(json, null, 2);
 
   const output = `${msg}() ${data}`;
   console.log(color(output));
@@ -170,4 +178,6 @@ module.exports = {
   showMap,
   table,
   trace,
+
+  promisify,
 };
