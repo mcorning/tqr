@@ -51,6 +51,7 @@ const {
   jLog,
   notice,
   isEmpty,
+  reducePairsToObject,
   success,
   table,
   warn,
@@ -59,8 +60,9 @@ const {
 //#endregion Setup
 
 const printResults = (msg, result) => {
-  success(msg);
-  jLog(result, '', clc.green);
+  console.groupCollapsed(msg);
+  table(result);
+  console.groupEnd();
 };
 
 const testAddConnctions = (connections) => {
@@ -69,7 +71,7 @@ const testAddConnctions = (connections) => {
     jLog(connection, 'connection');
     app
       .onAddConnection(connection)
-      .then((result) => printResults(`Test Passed: new connection`, result))
+      .then((result) => printResults(`\tTest onAddConnection() PASSED`, result))
       .catch((e) => error(jLog(e, 'Error in onAddConnection() chain')));
   });
   // interesting...adding connections is orthogonal to add promos
@@ -84,7 +86,7 @@ const testAddPromotions = (connections) => {
     jLog(connection, 'connection');
     tqr
       .onAddPromotion(connection)
-      .then((result) => printResults(`Test Passed: new promotion`, result))
+      .then((result) => printResults(`\tTest onAddPromotion() PASSED`, result))
       .catch((e) => error(jLog(e, 'Error in onAddPromotions() chain')));
   });
 };
@@ -99,37 +101,45 @@ const testGetCountries = () => {
     .onGetCountries()
     // TODO better to use Promise.reject() for failed tests
     .then((countries) => {
-      printResults(`onGetCountries succeeded: ${countries}`);
+      printResults(`\tTesting onGetCountries() PASSED:`, countries);
       return countries;
     });
 };
 
 const testGetConnections = () => {
-  log('testing onGetConnections');
+  log('testing onGetConnections()');
   app.onGetCountries().then((countries) =>
     countries.forEach((country) => {
       app
         .onGetConnections(country)
         // TODO better to use Promise.reject() for failed tests
         .then((conns) => {
-          jLog(conns, `getConnections succeeded: `, clc.green);
+          printResults(`\tTesting onGetConnections() PASSED: `, conns);
         });
     })
   );
 };
 
+const getResults = (result) =>
+  result ? reducePairsToObject(result[0][1][0][1]) : 'no promos';
+
 const testGetPromotions = () => {
-  log('testing onGetPromotions');
-  tqr
-    .onGetPromotions()
-    .then((result) =>
-      log(
-        `Test getPromotions return this many results: ${
-          result ? result.length : 0
-        }`
-      )
-    );
+  app.onGetCountries().then((countries) => {
+    countries.forEach((country) => {
+      app.onGetConnections(country).then((conns) => {
+        conns.forEach((connection) => {
+          tqr
+            .onGetPromotions({ country, nonce: connection[1][1] })
+            .then((result) => getResults(result))
+            .then((results) =>
+              printResults(`\tTesting onGetPromotions() PASSED: `, results)
+            );
+        });
+      });
+    });
+  });
 };
+const reset = true;
 
 notice('Connecting...');
 // connect to server and to Redis
@@ -138,8 +148,12 @@ app
   .connectMe()
   .then(() => tqr.connectMe())
   .then(() => notice('Connected'))
-  // .then(() => testAdds());
-  .then(() => testGets());
+  .then(() => {
+    if (reset) {
+      testAdds();
+    }
+    testGets();
+  });
 
 const testAdds = compose(
   testAddAnon,

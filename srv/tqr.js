@@ -10,7 +10,15 @@ const {
   killSwitch,
   redis,
 } = require('./redis/tqr');
-const { error, head, success, jLog, log, notice } = require('./utils/helpers');
+const {
+  error,
+  head,
+  success,
+  jLog,
+  log,
+  notice,
+  showMap,
+} = require('./utils/helpers');
 
 // methods called by index.js
 const onAddPromo = (args, socket, io) => {
@@ -32,12 +40,13 @@ const onAddPromo = (args, socket, io) => {
 const onGetPromos = (args) => {
   const key = args[0];
   const ack = args[1];
-
-  const promoKey = key
-    ? `${key}${key.endsWith(':') ? 'promos' : ':promos'}`
-    : '*:promos';
-  console.log('promoKey', promoKey);
-  return getPromos(promoKey).then((result) => ack(result));
+  const { country, nonce } = key;
+  const promoKey = `${country}:${nonce}:promos`;
+  console.log('promoKey:', promoKey);
+  return getPromos(promoKey).then((result) => {
+    jLog(result);
+    ack(result);
+  });
 };
 
 module.exports = {

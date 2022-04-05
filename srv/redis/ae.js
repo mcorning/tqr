@@ -39,7 +39,7 @@ const addConnection = (country, nonce) => {
   return redis.xadd(args).catch((e) => error(e));
 };
 
-// xrange us 1642558471131-0 1642558471131-0
+// xrange tqr:sg:FoodRepublic:promos - +
 const getConnections = (cmd) =>
   // redis returns a Promise<Map>}
   redis.xrange(cmd).catch((e) => {

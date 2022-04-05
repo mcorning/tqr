@@ -38,7 +38,6 @@ const getPromo = (connection, promo) => {
 const onGetPromotions = (key) =>
   new Promise((resolve) =>
     socket.emit('getPromos', key, (result) => {
-      log(result);
       resolve(result);
     })
   );

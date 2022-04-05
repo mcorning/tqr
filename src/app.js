@@ -53,11 +53,13 @@ const onGetCountries = () =>
     )
   );
 
+// called by tests/tests.js or by UI
 const onGetConnections = (country, sid1 = '-', sid2 = '+') =>
   new Promise((resolve) =>
     socket.emit(
       'getConnections',
       [`${country}:connections`, sid1, sid2],
+      // (result) => resolve(showMap(result, 'onGetConnections()'))
       (result) => resolve(result)
     )
   );

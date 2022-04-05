@@ -26,7 +26,17 @@ const {
   redis,
 } = require('./tqr');
 
-const { error, success, jLog, log, notice } = require('./utils/helpers');
+const {
+  error,
+  success,
+  formatSmallTime,
+  jLog,
+  log,
+  notice,
+  safeAck,
+  table,
+  trace,
+} = require('./utils/helpers');
 
 /* This is the express server that is listening on port 3333. */
 const server = express()
@@ -43,12 +53,11 @@ const io = socketIO(server);
 //#endregion Setup
 
 //#region Helpers
-const safeAck = (ack, data) => {
-  if (ack && typeof ack === 'function') {
-    ack(data);
-  }
+const printResults = (msg, result) => {
+  console.groupCollapsed(msg);
+  table(result);
+  console.groupEnd();
 };
-
 const joinSocketRoom = (socket, country, nonce, lastDeliveredId, userID) => {
   console.groupCollapsed('io.on(connection).joinSocketRoom()');
   const conn = {
@@ -95,7 +104,6 @@ const onAddConnection = (args, socket) => {
 
 // TODO be sure client can specify - + values
 const onGetConnections = (args) => {
-  jLog(args, 'onGetConnections().args:');
   const cmd = args[0];
   const ack = args[1];
   console.assert(
@@ -107,15 +115,18 @@ const onGetConnections = (args) => {
 
 const onGetCountries = (args) => {
   const ack = args[0];
-  ae.getCountries().then((countries) => safeAck(ack, countries));
+  ae.getCountries()
+    .then((p) => trace(p, 'ae.getCountries() results:'))
+    .then((countries) => safeAck(ack, countries));
 };
 //#endregion Event handlers
 
 io.on('connection', (socket) => {
-  notice(`About to handle on('connection') for ${socket.handshake.auth.nonce}`);
+  notice(`About to handle on('connection') for socket ID: ${socket.id}`);
 
   socket.onAny((event, ...args) => {
-    jLog(args, event);
+    console.log(formatSmallTime(), 'handling event');
+    printResults(`${event}()`, typeof args[0] === 'function' ? '' : args);
 
     const methods = {
       //ae functions

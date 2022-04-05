@@ -1,5 +1,5 @@
 {
-  "version": "0.04.0113",
+  "version": "0.04.0418",
   "scripts": {
     "start": "node tests"
   },

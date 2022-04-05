@@ -17,13 +17,20 @@ const isValidJSON = (str) => {
  * Flattens a (nested) Map returning a flattened array of arrays.
  * @param {Object} map - the map function to apply to the data.
  */
-const reduceMap = (map) =>
+const reduceMapX = (map) =>
   map.reduce((a, c) => {
     a.push([c[0], c[1][1]]);
     return a;
   }, []);
 //#endregion
 
+const reduceMap = (map) =>
+  map.reduce((a, c) => {
+    const key = c[0];
+    const value = c[1][0];
+    a.push(key, !Array.isArray(value) ? value : value[1]);
+    return a;
+  }, []);
 /** Use this Map/Reduce everywhere
  * It takes a map and reduces it to an array of arrays.
  * @param map - The map to be collapsed/expanded.
@@ -40,6 +47,17 @@ const showMap = (map, msg) => {
 };
 
 //#endregion Helpers
+const trace = (promise, msg = 'results :>>') => {
+  console.groupCollapsed(msg);
+  console.table(promise);
+  console.groupEnd();
+  return promise;
+};
+const safeAck = (ack, data) => {
+  if (ack && typeof ack === 'function') {
+    ack(data);
+  }
+};
 const binaryHas = (score, val) => (score & val) === val;
 
 function error(e) {
@@ -58,7 +76,12 @@ function info(msg) {
 const isEmpty = (val) => val == null || !(Object.keys(val) || val).length;
 
 function jLog(json, msg = 'json >>:', color = clc.white) {
-  const output = `${msg} ${JSON.stringify(json, null, 3)}`;
+  if (isEmpty(json)) {
+    return '';
+  }
+  const data = typeof json[0] === 'function' ? `` : json;
+
+  const output = `${msg}() ${data}`;
   console.log(color(output));
 }
 
@@ -143,6 +166,8 @@ module.exports = {
   formatTime,
   url,
   reducePairsToObject,
-  table,
+  safeAck,
   showMap,
+  table,
+  trace,
 };
